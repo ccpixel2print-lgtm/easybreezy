@@ -35,6 +35,13 @@
 - Anchors: `#home`, `#about`, `#services`, `#contact` (smooth scroll).
 - Static assets: `/images/*.webp` (hero, service cards, about, logo).
 
+## Contact Details (live)
+- **Address**: BJR Nagar, Jawahar Nagar, Ambedkar Nagar, Hyderabad, Secunderabad, Telangana 500087
+- **Email**: easybreezy607@gmail.com
+- **Phone**: 90144-34640
+- **Google Map**: Embedded in Contact section + "Get Directions" button
+- **WhatsApp Support**: Floating button on all pages → wa.me/919014434640 (pre-filled message)
+
 ## Features Completed
 - ✅ Fully responsive, mobile-first layout
 - ✅ Sticky navbar with scroll effect + working mobile hamburger
@@ -45,6 +52,9 @@
 - ✅ Semantic HTML with single `<h1>` and structured `<h2>/<h3>` hierarchy
 - ✅ Optimized WebP imagery for fast loading
 - ✅ SEO metadata + accessible markup
+- ✅ Google Maps embed + "Get Directions" link in Contact section
+- ✅ Global floating WhatsApp support button (#25D366, pulse animation, hover tooltip)
+- ✅ Real contact details wired into Contact section & footer (clickable tel/mailto)
 
 ## Not Implemented (out of scope by design)
 - Real login / authentication

@@ -3,24 +3,35 @@
 import { useState } from 'react';
 import Reveal from './Reveal';
 
+const MAP_EMBED_SRC =
+  'https://www.google.com/maps?q=Easy+Breezy+Service+Provider,+BJR+Nagar,+Jawahar+Nagar,+Ambedkar+Nagar,+Hyderabad,+Secunderabad,+Telangana+500087&output=embed';
+
+const MAP_DIRECTIONS_URL =
+  'https://www.google.com/maps/dir//Easy+breezy+service+provider,+BJR+Nagar,+Jawahar+Nagar,+Ambedkar+Nagar,+Hyderabad,+Secunderabad,+Telangana+500087/@17.4123487,78.4080455,11z/data=!4m8!4m7!1m0!1m5!1m1!1s0x3bcb9d1ded98862f:0x291d712f94401b78!2m2!1d78.5714561!2d17.5090846?entry=ttu';
+
 const details = [
   {
     label: 'Call Us',
-    value: '+91 98765 43210',
+    value: '90144-34640',
+    href: 'tel:+919014434640',
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
     ),
   },
   {
     label: 'Email Us',
-    value: 'hello@easybreezy.in',
+    value: 'easybreezy607@gmail.com',
+    href: 'mailto:easybreezy607@gmail.com',
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
     ),
   },
   {
     label: 'Visit Us',
-    value: '2nd Floor, Skyline Plaza, MG Road, Bengaluru 560001',
+    value:
+      'BJR Nagar, Jawahar Nagar, Ambedkar Nagar, Hyderabad, Secunderabad, Telangana 500087',
+    href: MAP_DIRECTIONS_URL,
+    external: true,
     icon: (
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
     ),
@@ -148,9 +159,15 @@ export default function Contact() {
                       <p className="text-xs font-semibold uppercase tracking-wider text-accent">
                         {d.label}
                       </p>
-                      <p className="mt-0.5 text-sm font-medium leading-relaxed text-white/90">
+                      <a
+                        href={d.href}
+                        {...(d.external
+                          ? { target: '_blank', rel: 'noopener noreferrer' }
+                          : {})}
+                        className="mt-0.5 block text-sm font-medium leading-relaxed text-white/90 transition-colors hover:text-accent"
+                      >
                         {d.value}
-                      </p>
+                      </a>
                     </div>
                   </li>
                 ))}
@@ -158,6 +175,37 @@ export default function Contact() {
             </div>
           </Reveal>
         </div>
+
+        {/* Google Map */}
+        <Reveal delay={80} className="mt-10">
+          <div className="overflow-hidden rounded-3xl shadow-card ring-1 ring-black/5">
+            <iframe
+              title="Easy Breezy Service Provider location on Google Maps"
+              src={MAP_EMBED_SRC}
+              width="100%"
+              height="380"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+              className="block h-[300px] w-full sm:h-[380px]"
+            />
+          </div>
+          <div className="mt-5 flex justify-center">
+            <a
+              href={MAP_DIRECTIONS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark active:scale-95"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+              Get Directions
+            </a>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

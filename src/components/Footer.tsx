@@ -83,9 +83,23 @@ export default function Footer() {
               Contact
             </h3>
             <ul className="mt-4 space-y-3 text-sm text-white/70">
-              <li>+91 98765 43210</li>
-              <li>hello@easybreezy.in</li>
-              <li>MG Road, Bengaluru 560001</li>
+              <li>
+                <a href="tel:+919014434640" className="transition-colors hover:text-accent">
+                  90144-34640
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:easybreezy607@gmail.com"
+                  className="break-all transition-colors hover:text-accent"
+                >
+                  easybreezy607@gmail.com
+                </a>
+              </li>
+              <li>
+                BJR Nagar, Jawahar Nagar, Ambedkar Nagar, Hyderabad, Secunderabad,
+                Telangana 500087
+              </li>
             </ul>
           </div>
         </div>
