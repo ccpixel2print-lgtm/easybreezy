@@ -32,8 +32,13 @@
 
 ## Functional Entry URIs
 - `/` — Single-page landing page (all sections).
-- Anchors: `#home`, `#about`, `#services`, `#contact` (smooth scroll).
+- `/services` — Services catalogue page: header banner, category filter tabs (visual), mapped B2C service grid, and B2B section.
+- `/services/[slug]` — Placeholder service detail pages (statically generated per service: plumber, electrician, maid, deep-cleaning, ac-service, bathroom-cleaning, sofa-cleaning, kitchen-cleaning).
+- Anchors: `/#home`, `/#about`, `/#services`, `/#contact` (smooth scroll; route back to home from any page).
 - Static assets: `/images/*.webp` (hero, service cards, about, logo).
+
+## Data Architecture
+- **`src/data/services.ts`** — single source of truth for services (B2C `services[]` + B2B `businessServices[]`). The Services page maps over this array via a reusable `ServiceCard` component, so the grid can later be driven by a database/API with the same shape (fields: `slug`, `name`, `description`, `startingPrice`, `category`, `image`, `imageAlt`).
 
 ## Contact Details (live)
 - **Address**: BJR Nagar, Jawahar Nagar, Ambedkar Nagar, Hyderabad, Secunderabad, Telangana 500087
@@ -55,6 +60,9 @@
 - ✅ Google Maps embed + "Get Directions" link in Contact section
 - ✅ Global floating WhatsApp support button (#25D366, pulse animation, hover tooltip)
 - ✅ Real contact details wired into Contact section & footer (clickable tel/mailto)
+- ✅ Dedicated `/services` catalogue page — data-driven grid (mapped from array), 8 services, category filter tabs, "Starting at ₹" pricing, "View & Book" CTAs
+- ✅ Reusable `ServiceCard` + `ServicesGrid` + `BusinessServicesSection` components for easy dynamic/API wiring
+- ✅ Statically generated placeholder service detail pages at `/services/[slug]`
 
 ## Not Implemented (out of scope by design)
 - Real login / authentication

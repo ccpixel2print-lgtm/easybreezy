@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'easy-breezy',
       script: 'npx',
-      args: 'serve out -l 3000 -s',
+      args: 'serve out -l 3000',
       cwd: '/home/user/webapp',
       env: {
         NODE_ENV: 'production',

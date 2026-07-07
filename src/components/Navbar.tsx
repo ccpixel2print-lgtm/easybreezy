@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import Logo from './Logo';
 
 const navLinks = [
-  { label: 'Home', href: '#home' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Home', href: '/#home' },
+  { label: 'About', href: '/#about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Contact', href: '/#contact' },
 ];
 
 export default function Navbar() {
