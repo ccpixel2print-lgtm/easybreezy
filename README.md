@@ -33,7 +33,7 @@
 ## Functional Entry URIs
 - `/` — Single-page landing page (all sections).
 - `/services` — Services catalogue page: header banner, category filter tabs (visual), mapped B2C service grid, and B2B section.
-- `/services/[slug]` — Placeholder service detail pages (statically generated per service: plumber, electrician, maid, deep-cleaning, ac-service, bathroom-cleaning, sofa-cleaning, kitchen-cleaning).
+- `/services/[slug]` — Rich service detail pages (statically generated per service: plumber, electrician, maid, deep-cleaning, ac-service, bathroom-cleaning, sofa-cleaning, kitchen-cleaning). Shows a service banner (image, rating, bookings, trust badges) and either a mapped list of bookable sub-service packages (with price, duration, "Add to Cart") OR a directly-bookable flat-price service — driven by a `hasSubServices` flag. Includes a "Why choose Easy Breezy" sidebar, WhatsApp help prompt, and a visual cart-count badge.
 - Anchors: `/#home`, `/#about`, `/#services`, `/#contact` (smooth scroll; route back to home from any page).
 - Static assets: `/images/*.webp` (hero, service cards, about, logo).
 
@@ -62,7 +62,9 @@
 - ✅ Real contact details wired into Contact section & footer (clickable tel/mailto)
 - ✅ Dedicated `/services` catalogue page — data-driven grid (mapped from array), 8 services, category filter tabs, "Starting at ₹" pricing, "View & Book" CTAs
 - ✅ Reusable `ServiceCard` + `ServicesGrid` + `BusinessServicesSection` components for easy dynamic/API wiring
-- ✅ Statically generated placeholder service detail pages at `/services/[slug]`
+- ✅ Rich service detail pages at `/services/[slug]` — banner (rating/bookings/trust badges), mapped sub-service package cards, "Add to Cart" buttons, sidebar & WhatsApp prompt
+- ✅ Flexible **Option-B model**: `hasSubServices` flag supports both grouped services (package list) and directly-bookable flat-price services (e.g. Bathroom & Kitchen Cleaning)
+- ✅ Reusable `SubServiceCard`, `AddToCartButton` (visual) + `CartBadge` item-count indicator
 
 ## Not Implemented (out of scope by design)
 - Real login / authentication
