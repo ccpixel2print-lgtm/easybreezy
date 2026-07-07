@@ -1,10 +1,19 @@
+import Link from 'next/link';
 import Logo from './Logo';
 
 const quickLinks = [
-  { label: 'Home', href: '#home' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Home', href: '/#home' },
+  { label: 'About', href: '/#about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Cart', href: '/cart' },
+  { label: 'Contact', href: '/#contact' },
+];
+
+const policyLinks = [
+  { label: 'Terms & Conditions', href: '/terms' },
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Cancellation & Refund', href: '/cancellation-refund' },
+  { label: 'Shipping Policy', href: '/shipping' },
 ];
 
 const socials = [
@@ -34,9 +43,9 @@ export default function Footer() {
   return (
     <footer className="bg-brand-dark text-white">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-6">
           {/* Brand */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 lg:col-span-2">
             <Logo variant="light" size={48} />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
               One App, All Services, Total Peace of Mind. Trusted, verified home
@@ -66,12 +75,31 @@ export default function Footer() {
             <ul className="mt-4 space-y-3">
               {quickLinks.map((l) => (
                 <li key={l.href}>
-                  <a
+                  <Link
                     href={l.href}
                     className="text-sm text-white/70 transition-colors hover:text-accent"
                   >
                     {l.label}
-                  </a>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Policies */}
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-accent">
+              Policies
+            </h3>
+            <ul className="mt-4 space-y-3">
+              {policyLinks.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="text-sm text-white/70 transition-colors hover:text-accent"
+                  >
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>

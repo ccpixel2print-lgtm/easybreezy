@@ -4,13 +4,13 @@
 - **Name**: EASY BREEZY SERVICE PROVIDER
 - **Goal**: A modern, premium, mobile-first marketing landing page for an India-based home-services marketplace (Urban Company style).
 - **Tagline**: *One App, All Services, Total Peace of Mind*
-- **Type**: Marketing landing page only (no working backend, login, cart, or payments — all CTAs are visual placeholders as per scope).
+- **Type**: Marketing site + service catalogue + a visual (front-end-only) cart. No working backend, auth, or payments — all CTAs / checkout are placeholders as per scope.
 
 ## Tech Stack
 - **Framework**: Next.js 14 (App Router, static export `output: 'export'`)
 - **Styling**: Tailwind CSS 3 (custom brand theme)
 - **Fonts**: Poppins (Google Fonts via `next/font`)
-- **Imagery**: AI-generated photorealistic images of Indian home-service professionals (WebP optimized)
+- **Imagery**: AI-generated photorealistic images on marketing/service pages (WebP optimized). The **cart page uses plain grey placeholder blocks only** (no images), pending real product images.
 - **Deployment target**: Cloudflare Pages (static site)
 
 ## Brand Identity
@@ -20,7 +20,7 @@
 - **Logo**: Circular EB monogram badge (indigo ring + yellow fill), placed in navbar and footer.
 
 ## Page Sections (top → bottom)
-1. **Sticky Navbar** — Circular EB logo + brand text, nav links (Home, About, Services, Contact), indigo Login button, mobile hamburger menu, smooth-scroll anchors.
+1. **Sticky Navbar** — Circular EB logo + brand text, nav links (Home, About, Services, Contact), a **cart icon link → `/cart`**, indigo Login button, mobile hamburger menu, smooth-scroll anchors.
 2. **Hero** — Headline with yellow accent highlights, pincode-availability widget, hero image, trust stats.
 3. **Our Services (B2C, bookable)** — 4 image-led cards: Plumber, Electrician, Maid, Deep Cleaning with "Book Now" buttons.
 4. **For Businesses & Societies (B2B, enquiry only)** — 3 cards: Apartment Maintenance, Housekeeping, Security. "Contact Us" buttons smooth-scroll to `#contact`.
@@ -28,17 +28,24 @@
 6. **How It Works** — 4-step timeline with numbered indigo icons.
 7. **About** (`#about`) — Brand story + supporting image + highlights.
 8. **Contact** (`#contact`) — Contact form (Name, Email, Phone, Message) + business contact details. Landing point for all B2B enquiries.
-9. **Footer** — EB logo, quick links, contact info, social icons, copyright.
+9. **Footer** — EB logo, Quick Links (incl. Cart), a **Policies column** (Terms, Privacy, Cancellation & Refund, Shipping), contact info, social icons, copyright.
 
 ## Functional Entry URIs
 - `/` — Single-page landing page (all sections).
 - `/services` — Services catalogue page: header banner, category filter tabs (visual), mapped B2C service grid, and B2B section.
 - `/services/[slug]` — Rich service detail pages (statically generated per service: plumber, electrician, maid, deep-cleaning, ac-service, bathroom-cleaning, sofa-cleaning, kitchen-cleaning). Shows a service banner (image, rating, bookings, trust badges) and either a mapped list of bookable sub-service packages (with price, duration, "Add to Cart") OR a directly-bookable flat-price service — driven by a `hasSubServices` flag. Includes a "Why choose Easy Breezy" sidebar, WhatsApp help prompt, and a visual cart-count badge.
+- `/cart` — **Your Cart** page: brand-styled header banner + interactive cart. Lists cart items (mapped from a data array) each showing a grey placeholder image, name, description, preferred date/time & pincode tags, price, remove (trash) icon, and a −/+ hours control for hourly items. Inspection/visit items show an "Only visit fee charged now" info tag. Sticky **Order Summary** panel (subtotal + GST 18% + total in ₹) with a prominent indigo "Proceed to Checkout" button. Includes a friendly **empty-cart state** with a "Browse Services" button.
+- `/terms` — Terms & Conditions (placeholder content).
+- `/privacy` — Privacy Policy (placeholder content).
+- `/cancellation-refund` — Cancellation & Refund Policy (placeholder content).
+- `/shipping` — Shipping Policy (placeholder content).
 - Anchors: `/#home`, `/#about`, `/#services`, `/#contact` (smooth scroll; route back to home from any page).
 - Static assets: `/images/*.webp` (hero, service cards, about, logo).
 
 ## Data Architecture
 - **`src/data/services.ts`** — single source of truth for services (B2C `services[]` + B2B `businessServices[]`). The Services page maps over this array via a reusable `ServiceCard` component, so the grid can later be driven by a database/API with the same shape (fields: `slug`, `name`, `description`, `startingPrice`, `category`, `image`, `imageAlt`).
+- **`src/data/cart.ts`** — single source of truth for the cart. Exports a `CartItem` interface, a `cartItems[]` array (mapped by the UI so it can later be swapped for real cart state/API of the same shape), and `GST_RATE = 0.18`. Item fields: `id`, `name`, `description`, `price`, `quantity`, `isHourly`, `preferredDate`, `preferredTime`, `pincode`, optional `isInspection`.
+- **Reusable components**: `ImagePlaceholder` (grey "Service Image" block used on the cart), `CartView` (client component with quantity/remove/summary state via `useState`/`useMemo`), `PolicyLayout` (shared brand shell reused by all 4 policy pages).
 
 ## Contact Details (live)
 - **Address**: BJR Nagar, Jawahar Nagar, Ambedkar Nagar, Hyderabad, Secunderabad, Telangana 500087
@@ -65,6 +72,9 @@
 - ✅ Rich service detail pages at `/services/[slug]` — banner (rating/bookings/trust badges), mapped sub-service package cards, "Add to Cart" buttons, sidebar & WhatsApp prompt
 - ✅ Flexible **Option-B model**: `hasSubServices` flag supports both grouped services (package list) and directly-bookable flat-price services (e.g. Bathroom & Kitchen Cleaning)
 - ✅ Reusable `SubServiceCard`, `AddToCartButton` (visual) + `CartBadge` item-count indicator
+- ✅ **`/cart` page** — data-driven (mapped array) cart with grey placeholder images only, per-item date/time/pincode tags, hourly −/+ hours control, remove (trash) action, inspection "visit fee only" tag, sticky Order Summary (subtotal + GST 18% + total in ₹), "Proceed to Checkout" button, and an empty-cart state — all responsive & mobile-first
+- ✅ Cart icon link in navbar (desktop + mobile menu)
+- ✅ **4 policy pages** (Terms & Conditions, Privacy Policy, Cancellation & Refund, Shipping) — brand-styled placeholder content via a shared `PolicyLayout`, linked from a footer **Policies** column
 
 ## Not Implemented (out of scope by design)
 - Real login / authentication
@@ -91,4 +101,4 @@ pm2 start ecosystem.config.cjs   # serves ./out on port 3000
 ## Deployment
 - **Platform**: Cloudflare Pages (static export in `./out`)
 - **Status**: ✅ Built & running locally; ready to deploy
-- **Last Updated**: 2026-07-02
+- **Last Updated**: 2026-07-07
