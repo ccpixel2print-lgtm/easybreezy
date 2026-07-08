@@ -110,3 +110,52 @@ export async function fetchServiceSlugs(): Promise<string[]> {
   const services = await fetchServices();
   return services.map((s) => s.slug);
 }
+
+// ---- Serviceability ----
+
+export interface PincodeCheckResult {
+  serviceable: boolean;
+  areaName?: string | null;
+  city?: string | null;
+}
+
+export async function checkPincode(pincode: string): Promise<PincodeCheckResult> {
+  try {
+    const res = await fetch(`${API_URL}/serviceability/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pincode }),
+      cache: 'no-store', // always live, never cached
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return (await res.json()) as PincodeCheckResult;
+  } catch (err) {
+    console.error(`checkPincode(${pincode}) failed:`, err);
+    // On failure, treat as not serviceable but let caller show a soft error
+    return { serviceable: false };
+  }
+}
+
+export interface LeadInput {
+  pincode: string;
+  email?: string;
+  phone?: string;
+  serviceId?: string;
+}
+
+export async function captureLead(data: LeadInput): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/leads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const json = await res.json();
+    return json?.captured === true;
+  } catch (err) {
+    console.error('captureLead failed:', err);
+    return false;
+  }
+}

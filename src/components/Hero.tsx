@@ -1,18 +1,34 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
+import { checkPincode, captureLead, type PincodeCheckResult } from '@/lib/api';
 
 export default function Hero() {
   const [pincode, setPincode] = useState('');
-  const [checked, setChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<PincodeCheckResult | null>(null);
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadSent, setLeadSent] = useState(false);
 
-  const handleCheck = (e: React.FormEvent) => {
+  const handleCheck = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pincode.trim().length >= 5) {
-      setChecked(true);
-    }
+    if (pincode.trim().length !== 6) return;
+    setLoading(true);
+    setResult(null);
+    setLeadSent(false);
+    const res = await checkPincode(pincode.trim());
+    setResult(res);
+    setLoading(false);
   };
+
+  const handleLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const ok = await captureLead({ pincode: pincode.trim(), email: leadEmail.trim() });
+    if (ok) setLeadSent(true);
+  };
+
 
   return (
     <section
@@ -81,7 +97,8 @@ export default function Hero() {
                 value={pincode}
                 onChange={(e) => {
                   setPincode(e.target.value.replace(/\D/g, '').slice(0, 6));
-                  setChecked(false);
+                  setResult(null);
+                  setLeadSent(false);
                 }}
                 placeholder="Enter your pincode to check availability"
                 aria-label="Enter your pincode"
@@ -90,24 +107,73 @@ export default function Hero() {
             </div>
             <button
               type="submit"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-accent px-5 py-3 text-sm font-bold text-brand-dark shadow-sm transition-all duration-200 hover:bg-accent-dark hover:shadow-md active:scale-95"
+              disabled={loading || pincode.length !== 6}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-accent px-5 py-3 text-sm font-bold text-brand-dark shadow-sm transition-all duration-200 hover:bg-accent-dark hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Check Availability
+              {loading ? 'Checking…' : 'Check Availability'}
             </button>
+
           </form>
 
-          {checked && (
-            <p className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-green-600">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path
-                  fillRule="evenodd"
-                  d="M16.7 5.3a1 1 0 010 1.4l-7.5 7.5a1 1 0 01-1.4 0L3.3 9.7a1 1 0 011.4-1.4l3.3 3.3 6.8-6.8a1 1 0 011.4 0z"
-                  clipRule="evenodd"
+          {result?.serviceable && (
+            <div className="mt-3 flex flex-col items-center gap-2 sm:flex-row lg:justify-start">
+              <p className="inline-flex items-center gap-2 text-sm font-medium text-green-600">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path
+                    fillRule="evenodd"
+                    d="M16.7 5.3a1 1 0 010 1.4l-7.5 7.5a1 1 0 01-1.4 0L3.3 9.7a1 1 0 011.4-1.4l3.3 3.3 6.8-6.8a1 1 0 011.4 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Great news! We serve {result.areaName ? `${result.areaName}, ` : ''}
+                {result.city ?? 'your area'}.
+              </p>
+              <Link
+                href="/services"
+                className="inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white transition hover:bg-brand-dark"
+              >
+                Browse services →
+              </Link>
+            </div>
+          )}
+
+          {result && !result.serviceable && !leadSent && (
+            <div className="mt-3 max-w-md rounded-xl bg-red-50 p-3 ring-1 ring-red-100 lg:mx-0">
+              <p className="inline-flex items-center gap-2 text-sm font-medium text-red-600">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zM9 9a1 1 0 112 0v4a1 1 0 11-2 0V9zm1-5a1 1 0 100 2 1 1 0 000-2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                We&apos;re not in your area yet.
+              </p>
+              <form onSubmit={handleLead} className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="email"
+                  required
+                  value={leadEmail}
+                  onChange={(e) => setLeadEmail(e.target.value)}
+                  placeholder="Email us for updates"
+                  className="flex-1 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-ink placeholder:text-ink/45 focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
-              </svg>
-              Great news! We serve your area. Book a service below.
+                <button
+                  type="submit"
+                  className="rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-dark"
+                >
+                  Notify me
+                </button>
+              </form>
+            </div>
+          )}
+
+          {leadSent && (
+            <p className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-green-600">
+              Thanks! We&apos;ll let you know when we launch in your area.
             </p>
           )}
+
 
           {/* Mini trust stats */}
           <dl className="mt-8 flex items-center justify-center gap-8 lg:justify-start">
