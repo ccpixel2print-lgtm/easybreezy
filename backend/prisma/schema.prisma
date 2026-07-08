@@ -15,7 +15,7 @@ datasource db {
 
 model ServiceCategory {
   id           String    @id @default(uuid())
-  name         String
+  name         String    @unique
   displayOrder Int       @default(0)
   active       Boolean   @default(true)
   createdAt    DateTime  @default(now())
@@ -25,28 +25,32 @@ model ServiceCategory {
 }
 
 model Service {
-  id              String        @id @default(uuid())
-  categoryId      String
-  name            String
-  slug            String        @unique
-  description     String?
-  imageUrl        String?
-  hasSubServices  Boolean       @default(false)
+  id               String        @id @default(uuid())
+  categoryId       String
+  name             String
+  slug             String        @unique
+  description      String?
+  longDescription  String?
+  imageUrl         String?
+  imageAlt         String?
+  hasSubServices   Boolean       @default(false)
 
   // Used only when hasSubServices = false (service is directly bookable)
-  pricingType     PricingType?
-  basePrice       Int?          // in paise
-  hourlyRate      Int?          // in paise
-  visitFee        Int?          // in paise
-  durationMins    Int?
+  pricingType      PricingType?
+  basePrice        Int?          // paise
+  hourlyRate       Int?          // paise
+  visitFee         Int?          // paise
+  durationLabel    String?       // human-readable, e.g. "45–60 min"
 
-  active          Boolean       @default(true)
-  displayOrder    Int           @default(0)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  startingPrice    Int?          // paise — lowest price to display on the card
 
-  category        ServiceCategory @relation(fields: [categoryId], references: [id])
-  subServices     SubService[]
+  active           Boolean       @default(true)
+  displayOrder     Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  category         ServiceCategory @relation(fields: [categoryId], references: [id])
+  subServices      SubService[]
 }
 
 model SubService {
@@ -55,12 +59,14 @@ model SubService {
   name          String
   description   String?
   imageUrl      String?
+  imageAlt      String?
 
   pricingType   PricingType
-  basePrice     Int?         // in paise
-  hourlyRate    Int?         // in paise
-  visitFee      Int?         // in paise
-  durationMins  Int?
+  basePrice     Int?         // paise (for FIXED)
+  hourlyRate    Int?         // paise (for HOURLY)
+  visitFee      Int?         // paise (for VISITING)
+  originalPrice Int?         // paise — optional strike-through price
+  durationLabel String?      // human-readable, e.g. "3–4 hrs"
 
   active        Boolean      @default(true)
   displayOrder  Int          @default(0)
