@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { services, serviceCategories } from '@/data/services';
+import { serviceCategories, type Service } from '@/data/services';
 import ServiceCard from './ServiceCard';
 
 /**
@@ -9,7 +9,7 @@ import ServiceCard from './ServiceCard';
  * The grid is produced by `.map()` over the shared `services` data array,
  * so it stays fully dynamic-ready.
  */
-export default function ServicesGrid() {
+export default function ServicesGrid({ services }: { services: Service[] }) {
   const [active, setActive] = useState<(typeof serviceCategories)[number]>('All');
 
   const filtered = useMemo(

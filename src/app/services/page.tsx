@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import ServicesGrid from '@/components/ServicesGrid';
 import BusinessServicesSection from '@/components/BusinessServicesSection';
 import Reveal from '@/components/Reveal';
+import { fetchServices } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Our Services | Easy Breezy Service Provider',
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
     'Browse all Easy Breezy home services — plumber, electrician, maid, deep cleaning, AC service, bathroom, sofa & kitchen cleaning. Trusted, verified professionals for every home need.',
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const services = await fetchServices();
   return (
     <>
       <Navbar />
@@ -59,7 +61,7 @@ export default function ServicesPage() {
               </p>
             </Reveal>
 
-            <ServicesGrid />
+            <ServicesGrid services={services} />
           </div>
         </section>
 
