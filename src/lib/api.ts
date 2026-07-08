@@ -51,3 +51,62 @@ export async function fetchServices(): Promise<Service[]> {
     return services;
   }
 }
+
+import type { SubService } from '@/data/services';
+
+interface ApiSubService {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  imageAlt: string | null;
+  basePrice: number | null;
+  originalPrice: number | null;
+  durationLabel: string | null;
+}
+
+interface ApiServiceDetail extends ApiService {
+  subServices: ApiSubService[];
+}
+
+function mapSubService(api: ApiSubService): SubService {
+  return {
+    id: api.id,
+    name: api.name,
+    description: api.description ?? '',
+    price: toRupees(api.basePrice),
+    originalPrice: api.originalPrice ? toRupees(api.originalPrice) : undefined,
+    duration: api.durationLabel ?? '',
+    image: api.imageUrl ?? '/images/placeholder.webp',
+    imageAlt: api.imageAlt ?? api.name,
+  };
+}
+
+export async function fetchServiceBySlug(slug: string): Promise<Service | null> {
+  try {
+    const res = await fetch(`${API_URL}/catalog/services/${slug}`, {
+      next: { revalidate: 60 },
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const api: ApiServiceDetail = await res.json();
+
+    return {
+      ...mapService(api),
+      longDescription: api.longDescription ?? undefined,
+      hasSubServices: api.hasSubServices,
+      subServices: api.subServices?.map(mapSubService) ?? [],
+      // direct-booking price for services without sub-services
+      directPrice: !api.hasSubServices ? toRupees(api.startingPrice) : undefined,
+    };
+  } catch (err) {
+    console.error(`fetchServiceBySlug(${slug}) failed, falling back:`, err);
+    const { services } = await import('@/data/services');
+    return services.find((s) => s.slug === slug) ?? null;
+  }
+}
+
+export async function fetchServiceSlugs(): Promise<string[]> {
+  const services = await fetchServices();
+  return services.map((s) => s.slug);
+}

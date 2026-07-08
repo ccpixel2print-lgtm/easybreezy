@@ -7,25 +7,28 @@ import Footer from '@/components/Footer';
 import CartBadge from '@/components/CartBadge';
 import SubServiceCard from '@/components/SubServiceCard';
 import AddToCartButton from '@/components/AddToCartButton';
-import { services } from '@/data/services';
+import { fetchServiceBySlug, fetchServiceSlugs } from '@/lib/api';
 
 interface PageProps {
   params: { slug: string };
 }
 
 /** Required for static export — pre-render a page per service slug. */
-export function generateStaticParams() {
-  return services.map((s) => ({ slug: s.slug }));
+export async function generateStaticParams() {
+  const slugs = await fetchServiceSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const service = services.find((s) => s.slug === params.slug);
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const service = await fetchServiceBySlug(params.slug);
   if (!service) return { title: 'Service | Easy Breezy Service Provider' };
   return {
     title: `${service.name} | Easy Breezy Service Provider`,
     description: service.longDescription ?? service.description,
   };
 }
+
 
 const WHATSAPP_URL =
   'https://wa.me/919014434640?text=Hi Easy Breezy%2C I would like to know more about your services.';
@@ -61,9 +64,10 @@ const trustPoints = [
   },
 ];
 
-export default function ServiceDetailPage({ params }: PageProps) {
-  const service = services.find((s) => s.slug === params.slug);
+export default async function ServiceDetailPage({ params }: PageProps) {
+  const service = await fetchServiceBySlug(params.slug);
   if (!service) notFound();
+
 
   return (
     <>

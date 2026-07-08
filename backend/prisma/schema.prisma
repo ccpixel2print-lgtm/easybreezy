@@ -76,6 +76,26 @@ model SubService {
   service       Service      @relation(fields: [serviceId], references: [id])
 }
 
+model ServiceablePincode {
+  id        String   @id @default(uuid())
+  pincode   String   @unique
+  areaName  String
+  city      String   @default("Hyderabad")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AreaLead {
+  id        String   @id @default(uuid())
+  pincode   String
+  email     String?
+  phone     String?
+  serviceId String?
+  createdAt DateTime @default(now())
+}
+
+
 enum PricingType {
   FIXED
   HOURLY

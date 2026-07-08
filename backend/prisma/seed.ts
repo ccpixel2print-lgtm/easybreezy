@@ -139,6 +139,17 @@ async function main() {
     },
   });
 
+  // Serviceable pincodes (launch area around Jawahar Nagar, Hyderabad)
+  await prisma.serviceablePincode.deleteMany();
+  await prisma.serviceablePincode.createMany({
+    data: [
+      { pincode: '500087', areaName: 'Jawahar Nagar / BJR Nagar', city: 'Hyderabad' },
+      { pincode: '500062', areaName: 'Kapra', city: 'Hyderabad' },
+      { pincode: '500047', areaName: 'Nacharam', city: 'Hyderabad' },
+      { pincode: '500094', areaName: 'AS Rao Nagar', city: 'Hyderabad' },
+    ],
+  });
+
   console.log('Seeding complete.');
 }
 
