@@ -101,3 +101,40 @@ enum PricingType {
   HOURLY
   VISITING
 }
+
+model User {
+  id             String    @id @default(uuid())
+  fullName       String?
+  email          String    @unique
+  phone          String?
+  role           UserRole  @default(CUSTOMER)
+  passwordHash   String?   // null for customers (OTP-only); set for staff
+  status         String    @default("active") // active | inactive | suspended
+  emailVerifiedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  otpTokens      OtpToken[]
+}
+
+model OtpToken {
+  id         String    @id @default(uuid())
+  userId     String
+  codeHash   String    // store a hash of the OTP, never the raw code
+  purpose    String    @default("login") // login | ... (future)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum UserRole {
+  CUSTOMER
+  EMPLOYEE
+  SUPERVISOR
+  ADMIN
+}
