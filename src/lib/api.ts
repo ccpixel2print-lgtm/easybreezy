@@ -234,7 +234,27 @@ export interface CheckoutPayload {
   scheduledTimeWindow: string;
 }
 
-export async function submitCheckout(token: string, payload: CheckoutPayload) {
+export interface PaymentInfo {
+  provider: 'mock' | 'cod' | 'razorpay';
+  confirmImmediately: boolean;
+  gatewayOrderId: string | null;
+  paymentId: string;
+  orderId: string;
+  amount: number;
+}
+
+export interface CheckoutResponse {
+  order: {
+    id: string;
+    orderNumber: string;
+    totalAmount: number;
+    paymentStatus: string;
+    status: string;
+  };
+  payment: PaymentInfo;
+}
+
+export async function submitCheckout(token: string, payload: CheckoutPayload): Promise<CheckoutResponse> {
   const res = await fetch(`${API_URL}/me/checkout`, {
     method: 'POST',
     headers: {
@@ -248,5 +268,23 @@ export async function submitCheckout(token: string, payload: CheckoutPayload) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || 'Checkout failed.');
   }
-  return res.json(); // the created order (with bookings)
+  return res.json();
 }
+
+export async function mockConfirmPayment(token: string, orderId: string) {
+  const res = await fetch(`${API_URL}/payments/mock/confirm`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ orderId }),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Payment confirmation failed.');
+  }
+  return res.json();
+}
+
