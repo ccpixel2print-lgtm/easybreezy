@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Logo from './Logo';
+import { useAuth } from '@/context/AuthContext';
+import LoginModal from './LoginModal';
 
 const navLinks = [
   { label: 'Home', href: '/#home' },
@@ -14,6 +16,9 @@ const navLinks = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const [loginOpen, setLoginOpen] = useState(false);
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -72,26 +77,32 @@ export default function Navbar() {
               />
             </svg>
           </Link>
-          <button
-            type="button"
-            className="ml-1 inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md active:scale-95"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
+          {user ? (
+            <div className="ml-1 flex items-center gap-2">
+              <span className="hidden text-sm font-medium text-ink lg:inline">
+                {user.fullName || user.email}
+              </span>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center gap-2 rounded-full border border-brand px-5 py-2.5 text-sm font-semibold text-brand transition-all hover:bg-brand-tint active:scale-95"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
+              className="ml-1 inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-dark hover:shadow-md active:scale-95"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0"
-              />
-            </svg>
-            Login
-          </button>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
+              </svg>
+              Login
+            </button>
+          )}
+
         </div>
 
         {/* Mobile hamburger */}
@@ -161,29 +172,29 @@ export default function Navbar() {
             </svg>
             Cart
           </Link>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-dark"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
+          {user ? (
+            <button
+              type="button"
+              onClick={() => { logout(); setOpen(false); }}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-brand px-6 py-3 text-base font-semibold text-brand transition-colors hover:bg-brand-tint"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0"
-              />
-            </svg>
-            Login
-          </button>
+              Logout ({user.email})
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { setLoginOpen(true); setOpen(false); }}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-dark"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
+              </svg>
+              Login
+            </button>
+          )}
         </div>
       </div>
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </header>
   );
 }

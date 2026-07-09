@@ -159,3 +159,55 @@ export async function captureLead(data: LeadInput): Promise<boolean> {
     return false;
   }
 }
+
+// ---- Auth ----
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: 'CUSTOMER' | 'EMPLOYEE' | 'SUPERVISOR' | 'ADMIN';
+  fullName?: string | null;
+}
+
+export interface AuthResult {
+  accessToken: string;
+  user: AuthUser;
+}
+
+export async function requestCustomerOtp(email: string): Promise<{ sent: boolean; message?: string }> {
+  const res = await fetch(`${API_URL}/auth/customer/request-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to send OTP.');
+  }
+  return res.json();
+}
+
+export async function verifyCustomerOtp(email: string, code: string): Promise<AuthResult> {
+  const res = await fetch(`${API_URL}/auth/customer/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Invalid code.');
+  }
+  return res.json();
+}
+
+export async function fetchMe(token: string): Promise<AuthUser> {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Not authenticated.');
+  return res.json();
+}
+
