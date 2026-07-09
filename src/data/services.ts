@@ -30,6 +30,7 @@ export interface SubService {
 
 export interface Service {
   /** URL-friendly unique id (used for detail page routing later) */
+  id?: string;
   slug: string;
   name: string;
   description: string;

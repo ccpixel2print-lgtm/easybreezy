@@ -161,7 +161,15 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                         )}
                       </div>
                       <div className="w-full sm:w-44">
-                        <AddToCartButton />
+                        <AddToCartButton
+                          serviceId={service.id ?? service.slug}
+                          subServiceId={null}
+                          name={service.name}
+                          price={service.directPrice ?? service.startingPrice}
+                          isHourly={false}
+                          serviceSlug={service.slug}
+                        />
+
                       </div>
                     </div>
                     <p className="mt-2 text-xs text-ink/55">
@@ -189,8 +197,15 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                   </p>
                   <div className="mt-6 grid grid-cols-1 gap-5">
                     {service.subServices.map((sub, i) => (
-                      <SubServiceCard key={sub.id} subService={sub} index={i} />
+                      <SubServiceCard
+                        key={sub.id}
+                        subService={sub}
+                        serviceId={service.id ?? service.slug}     // ← need service.id available here
+                        serviceSlug={service.slug}
+                        index={i}
+                      />
                     ))}
+
                   </div>
                 </>
               ) : (

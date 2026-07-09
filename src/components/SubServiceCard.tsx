@@ -4,14 +4,17 @@ import AddToCartButton from './AddToCartButton';
 
 interface SubServiceCardProps {
   subService: SubService;
+  serviceId: string;
+  serviceSlug: string;
   index?: number;
 }
+
 
 /**
  * Reusable bookable-package card. Rendered by mapping over a service's
  * `subServices` array — no hardcoded cards.
  */
-export default function SubServiceCard({ subService, index = 0 }: SubServiceCardProps) {
+export default function SubServiceCard({ subService, serviceId, serviceSlug, index = 0 }: SubServiceCardProps) {
   const price = `₹${subService.price.toLocaleString('en-IN')}`;
   const original =
     subService.originalPrice != null
@@ -54,7 +57,16 @@ export default function SubServiceCard({ subService, index = 0 }: SubServiceCard
             )}
           </div>
           <div className="w-32 sm:w-36">
-            <AddToCartButton />
+            <AddToCartButton
+              serviceId={serviceId}
+              subServiceId={subService.id}
+              name={subService.name}
+              price={subService.price}
+              originalPrice={subService.originalPrice}
+              isHourly={false}
+              serviceSlug={serviceSlug}
+            />
+
           </div>
         </div>
       </div>

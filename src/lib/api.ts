@@ -23,6 +23,7 @@ const toRupees = (paise: number | null | undefined) =>
 // Transform API service -> the Service shape the UI components expect
 function mapService(api: ApiService): Service {
   return {
+    id: api.id,
     slug: api.slug,
     name: api.name,
     description: api.description ?? '',

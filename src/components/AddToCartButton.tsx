@@ -1,27 +1,45 @@
 'use client';
 
 import { useState } from 'react';
+import { useCart } from '@/context/CartContext';
 
 interface AddToCartButtonProps {
+  serviceId: string;
+  subServiceId?: string | null;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  isHourly?: boolean;
+  serviceSlug: string;
   label?: string;
   fullWidth?: boolean;
 }
 
-/**
- * Visual placeholder "Add to Cart" button.
- * Fires a global `eb-add-to-cart` event so the CartBadge count updates,
- * and shows a brief "Added ✓" confirmation. No real cart logic yet.
- */
 export default function AddToCartButton({
+  serviceId,
+  subServiceId = null,
+  name,
+  price,
+  originalPrice,
+  isHourly = false,
+  serviceSlug,
   label = 'Add to Cart',
   fullWidth = true,
 }: AddToCartButtonProps) {
+  const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
   const handleClick = () => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('eb-add-to-cart'));
-    }
+    addItem({
+      key: subServiceId ?? serviceId,
+      serviceId,
+      subServiceId,
+      name,
+      price,
+      originalPrice,
+      isHourly,
+      serviceSlug,
+    });
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1500);
   };
@@ -33,11 +51,7 @@ export default function AddToCartButton({
       aria-live="polite"
       className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 ${
         fullWidth ? 'w-full' : ''
-      } ${
-        added
-          ? 'bg-green-600 text-white'
-          : 'bg-brand text-white hover:bg-brand-dark'
-      }`}
+      } ${added ? 'bg-green-600 text-white' : 'bg-brand text-white hover:bg-brand-dark'}`}
     >
       {added ? (
         <>

@@ -3,6 +3,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import './globals.css';
+import { CartProvider } from '@/context/CartContext';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -43,12 +44,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={poppins.variable}>
-        <body className="font-sans antialiased">
-          <AuthProvider>
+      <body className="font-sans antialiased">
+        <AuthProvider>
+          <CartProvider>
             {children}
             <WhatsAppButton />
-          </AuthProvider>
-        </body>
+          </CartProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
