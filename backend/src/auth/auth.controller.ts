@@ -1,3 +1,6 @@
+import { UseGuards } from '@nestjs/common';
+import { JwtGuard } from './jwt.guard';
+import { CurrentUser } from './current-user.decorator';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -19,4 +22,16 @@ export class AuthController {
   verifyOtp(@Body('email') email: string, @Body('code') code: string) {
     return this.authService.verifyOtp(email, code);
   }
+
+  @Post('staff/login')
+  staffLogin(@Body('email') email: string, @Body('password') password: string) {
+    return this.authService.staffLogin(email, password);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('me')
+  me(@CurrentUser() user: { id: string }) {
+    return this.authService.getMe(user.id);
+  }
+
 }

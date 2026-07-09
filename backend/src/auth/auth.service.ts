@@ -117,6 +117,46 @@ export class AuthService {
     };
   }
 
+  // ---- Staff login (email + password) ----
+  async staffLogin(rawEmail: string, password: string) {
+    const email = (rawEmail ?? '').trim().toLowerCase();
+    if (!email || !password) {
+      throw new BadRequestException('Email and password are required.');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    // Only staff roles may use password login
+    const staffRoles = ['EMPLOYEE', 'SUPERVISOR', 'ADMIN'];
+    if (!user || !user.passwordHash || !staffRoles.includes(user.role)) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('Account is not active.');
+    }
+
+    const matches = await bcrypt.compare(password, user.passwordHash);
+    if (!matches) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    const accessToken = this.signToken(user.id, user.email, user.role);
+    return {
+      accessToken,
+      user: { id: user.id, email: user.email, role: user.role, fullName: user.fullName },
+    };
+  }
+
+  // ---- Fetch current user (for /me) ----
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, role: true, fullName: true, phone: true, status: true },
+    });
+    if (!user) throw new UnauthorizedException('User not found.');
+    return user;
+  }
+
   private signToken(userId: string, email: string, role: string) {
     return this.jwt.sign({ sub: userId, email, role });
   }
