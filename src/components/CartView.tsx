@@ -1,24 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { cartItems as initialItems, GST_RATE, type CartItem } from '@/data/cart';
+import { useCart } from '@/context/CartContext';
 import ImagePlaceholder from './ImagePlaceholder';
 
 const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+const GST_RATE = 0.18;
 
 export default function CartView() {
-  const [items, setItems] = useState<CartItem[]>(initialItems);
-
-  const updateQty = (id: string, delta: number) =>
-    setItems((prev) =>
-      prev.map((it) =>
-        it.id === id ? { ...it, quantity: Math.max(1, it.quantity + delta) } : it
-      )
-    );
-
-  const removeItem = (id: string) =>
-    setItems((prev) => prev.filter((it) => it.id !== id));
+  const { items, removeItem, updateQuantity } = useCart();
 
   const { subtotal, gst, total } = useMemo(() => {
     const sub = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
@@ -58,7 +49,7 @@ export default function CartView() {
         <div className="space-y-4">
           {items.map((item) => (
             <article
-              key={item.id}
+              key={item.key}
               className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-card ring-1 ring-black/5 transition-shadow hover:shadow-card-hover sm:flex-row sm:p-5"
             >
               {/* Placeholder image */}
@@ -69,11 +60,16 @@ export default function CartView() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-base font-bold text-ink">{item.name}</h3>
-                    <p className="mt-0.5 text-sm text-ink/60">{item.description}</p>
+                    <Link
+                      href={`/services/${item.serviceSlug}`}
+                      className="mt-0.5 text-xs font-medium text-brand hover:underline"
+                    >
+                      View service
+                    </Link>
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeItem(item.key)}
                     aria-label={`Remove ${item.name} from cart`}
                     className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-ink/40 transition-colors hover:bg-red-50 hover:text-red-500"
                   >
@@ -83,36 +79,10 @@ export default function CartView() {
                   </button>
                 </div>
 
-                {/* Tags: date, time, pincode, inspection */}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-cloud px-2.5 py-1 text-xs font-medium text-ink/70">
-                    <svg className="h-3.5 w-3.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                    </svg>
-                    {item.preferredDate}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-cloud px-2.5 py-1 text-xs font-medium text-ink/70">
-                    <svg className="h-3.5 w-3.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {item.preferredTime}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-cloud px-2.5 py-1 text-xs font-medium text-ink/70">
-                    <svg className="h-3.5 w-3.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                    </svg>
-                    Pincode: {item.pincode}
-                  </span>
-                  {item.isInspection && (
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-accent/25 px-2.5 py-1 text-xs font-semibold text-brand-dark">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                      </svg>
-                      Only visit fee charged now
-                    </span>
-                  )}
-                </div>
+                {/* Note: date/time/pincode are captured at checkout */}
+                <p className="mt-2 text-xs text-ink/50">
+                  You&apos;ll choose your preferred date, time &amp; address at checkout.
+                </p>
 
                 {/* Bottom: quantity + price */}
                 <div className="mt-4 flex items-center justify-between">
@@ -122,7 +92,7 @@ export default function CartView() {
                       <div className="flex items-center rounded-lg ring-1 ring-black/10">
                         <button
                           type="button"
-                          onClick={() => updateQty(item.id, -1)}
+                          onClick={() => updateQuantity(item.key, item.quantity - 1)}
                           aria-label="Decrease hours"
                           className="flex h-8 w-8 items-center justify-center rounded-l-lg text-brand transition-colors hover:bg-brand-tint"
                         >
@@ -133,7 +103,7 @@ export default function CartView() {
                         </span>
                         <button
                           type="button"
-                          onClick={() => updateQty(item.id, 1)}
+                          onClick={() => updateQuantity(item.key, item.quantity + 1)}
                           aria-label="Increase hours"
                           className="flex h-8 w-8 items-center justify-center rounded-r-lg text-brand transition-colors hover:bg-brand-tint"
                         >
@@ -150,9 +120,7 @@ export default function CartView() {
                       {inr(item.price * item.quantity)}
                     </p>
                     {item.isHourly && (
-                      <p className="text-xs text-ink/50">
-                        {inr(item.price)} / hr
-                      </p>
+                      <p className="text-xs text-ink/50">{inr(item.price)} / hr</p>
                     )}
                   </div>
                 </div>
@@ -193,15 +161,15 @@ export default function CartView() {
             </div>
           </dl>
 
-          <button
-            type="button"
+          <Link
+            href="/checkout"
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-brand-dark active:scale-[0.98]"
           >
             Proceed to Checkout
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
-          </button>
+          </Link>
 
           <p className="mt-3 flex items-start gap-2 text-xs text-ink/55">
             <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
