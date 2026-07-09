@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PricingType } from '@prisma/client';
+import { PaymentsService } from '../payments/payments.service';
 
 const GST_RATE = 0.18;
 
@@ -26,7 +27,10 @@ interface CheckoutInput {
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+  private prisma: PrismaService,
+  private payments: PaymentsService,
+) {}
 
   // Determine the effective unit price (in paise) for a booked item, from DB.
   private resolvePrice(
@@ -197,7 +201,10 @@ export class OrdersService {
       return created;
     });
 
-    return this.getOrderForCustomer(customerId, order.id);
+    const paymentInfo = await this.payments.initiatePayment(order.id);
+    const fullOrder = await this.getOrderForCustomer(customerId, order.id);
+    return { order: fullOrder, payment: paymentInfo };
+
   }
 
   async listOrders(customerId: string) {

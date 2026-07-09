@@ -169,7 +169,9 @@ model Order {
   updatedAt     DateTime     @updatedAt
 
   customer      User         @relation(fields: [customerId], references: [id])
+  paymentStatus PaymentStatus @default(PENDING)
   bookings      Booking[]
+  payments      Payment[]
 
   @@index([customerId])
 }
@@ -240,3 +242,33 @@ enum BookingStatus {
   NO_SHOW
 }
 
+model Payment {
+  id                String        @id @default(uuid())
+  orderId           String
+  provider          String        // "mock" | "cod" | "razorpay"
+  type              String        @default("full") // full | visit_fee | quote_balance (future)
+  amount            Int           // paise
+  status            PaymentStatus @default(PENDING)
+
+  // gateway references (null for cod; populated for razorpay/mock)
+  gatewayOrderId    String?
+  gatewayPaymentId  String?
+  gatewaySignature  String?
+
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}

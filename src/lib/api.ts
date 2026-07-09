@@ -212,3 +212,41 @@ export async function fetchMe(token: string): Promise<AuthUser> {
   return res.json();
 }
 
+// ---- Checkout ----
+
+export interface CheckoutItemPayload {
+  serviceId: string;
+  subServiceId?: string | null;
+  quantity?: number;
+}
+
+export interface CheckoutPayload {
+  items: CheckoutItemPayload[];
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
+  addressLine1: string;
+  addressLine2?: string;
+  area?: string;
+  city: string;
+  pincode: string;
+  scheduledDate: string;       // ISO date (yyyy-mm-dd)
+  scheduledTimeWindow: string;
+}
+
+export async function submitCheckout(token: string, payload: CheckoutPayload) {
+  const res = await fetch(`${API_URL}/me/checkout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Checkout failed.');
+  }
+  return res.json(); // the created order (with bookings)
+}
