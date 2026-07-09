@@ -51,6 +51,8 @@ model Service {
 
   category         ServiceCategory @relation(fields: [categoryId], references: [id])
   subServices      SubService[]
+  bookings  Booking[]
+
 }
 
 model SubService {
@@ -72,7 +74,7 @@ model SubService {
   displayOrder  Int          @default(0)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-
+  bookings  Booking[]
   service       Service      @relation(fields: [serviceId], references: [id])
 }
 
@@ -113,6 +115,8 @@ model User {
   emailVerifiedAt DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  orders    Order[]
+  bookings  Booking[]
 
   otpTokens      OtpToken[]
 }
@@ -138,3 +142,101 @@ enum UserRole {
   SUPERVISOR
   ADMIN
 }
+
+model Order {
+  id            String       @id @default(uuid())
+  orderNumber   String       @unique
+  customerId    String
+  status        OrderStatus  @default(PENDING_PAYMENT)
+
+  // snapshot of contact + address captured at checkout
+  contactName   String
+  contactPhone  String
+  contactEmail  String
+  addressLine1  String
+  addressLine2  String?
+  area          String?
+  city          String
+  pincode       String
+
+  // money in paise
+  subtotal      Int
+  taxAmount     Int
+  totalAmount   Int
+
+  placedAt      DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  customer      User         @relation(fields: [customerId], references: [id])
+  bookings      Booking[]
+
+  @@index([customerId])
+}
+
+model Booking {
+  id                 String        @id @default(uuid())
+  bookingNumber      String        @unique
+  orderId            String
+  customerId         String
+
+  // what was booked (reference + snapshot so history/invoices stay stable)
+  serviceId          String
+  subServiceId       String?
+  itemName           String        // snapshot of service/sub-service name
+  pricingType        PricingType   // snapshot
+  unitPrice          Int           // paise, snapshot at checkout
+  quantity           Int           @default(1) // hours for HOURLY, else 1
+
+  // money (paise)
+  serviceAmount      Int           // unitPrice * quantity (pre-tax)
+  taxAmount          Int
+  totalAmount        Int
+
+  // scheduling snapshot (copied from order-level choice at checkout)
+  scheduledDate      DateTime
+  scheduledTimeWindow String
+
+  // service location snapshot
+  addressLine1       String
+  addressLine2       String?
+  area               String?
+  city               String
+  pincode            String
+
+  status             BookingStatus @default(PENDING_PAYMENT)
+  source             String        @default("web")
+  notes              String?
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer           User          @relation(fields: [customerId], references: [id])
+  service            Service       @relation(fields: [serviceId], references: [id])
+  subService         SubService?   @relation(fields: [subServiceId], references: [id])
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT   // order created, awaiting payment
+  CONFIRMED         // paid, awaiting supervisor assignment
+  ASSIGNED          // employee assigned
+  IN_PROGRESS       // employee started work
+  AWAITING_QUOTE    // visiting: quote raised, awaiting customer approval/payment
+  COMPLETED         // work done + confirmed
+  CANCELLED
+  NO_SHOW
+}
+

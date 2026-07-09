@@ -6,10 +6,11 @@ import { CatalogModule } from './catalog/catalog.module';
 import { ServiceabilityModule } from './serviceability/serviceability.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule, CatalogModule, ServiceabilityModule, AuthModule],
+    PrismaModule, CatalogModule, ServiceabilityModule, AuthModule, OrdersModule],
   controllers: [AppController],
   providers: [AppService],
 })
