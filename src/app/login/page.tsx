@@ -92,22 +92,6 @@ export default function LoginPage() {
                 {loading ? 'Sending…' : 'Send OTP'}
               </button>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-dark active:scale-95 disabled:opacity-60"
-              >
-                {loading ? 'Sending code…' : 'Send OTP'}
-              </button>
-
-              {/* Small register link under the Send OTP button */}
-              <p className="text-center text-xs text-ink/60">
-                New here?{' '}
-                <Link href="/register" className="font-semibold text-brand hover:underline">
-                  Register
-                </Link>
-              </p>
-
             </form>
           ) : (
             <form onSubmit={handleVerify} className="mt-5 space-y-4">

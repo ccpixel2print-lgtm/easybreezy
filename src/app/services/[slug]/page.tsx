@@ -184,7 +184,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             </div>
           </div>
         </section>
-
+        
         {/* ===== Main content: sub-services + sidebar ===== */}
         <section className="bg-white py-12 sm:py-16">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">

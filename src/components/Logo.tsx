@@ -8,14 +8,14 @@ interface LogoProps {
 }
 
 export default function Logo({
-  size = 44,
+  size = 65,
   showText = true,
   variant = 'dark',
   className = '',
 }: LogoProps) {
   return (
     <a
-      href="#home"
+      href="/"
       aria-label="Easy Breezy Service Provider - Home"
       className={`flex items-center gap-2.5 ${className}`}
     >

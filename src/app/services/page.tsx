@@ -48,7 +48,7 @@ export default async function ServicesPage() {
         {/* B2C services grid */}
         <section id="services" className="scroll-mt-24 bg-white py-14 sm:py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <Reveal className="mx-auto mb-10 max-w-2xl text-center">
+            {/* <Reveal className="mx-auto mb-10 max-w-2xl text-center">
               <span className="inline-block rounded-full bg-brand-tint px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand">
                 Book Online
               </span>
@@ -59,7 +59,7 @@ export default async function ServicesPage() {
                 Pick a service, choose a time, and relax — a verified professional
                 will be at your doorstep.
               </p>
-            </Reveal>
+            </Reveal>*/}
 
             <ServicesGrid services={services} />
           </div>

@@ -7,6 +7,7 @@ const quickLinks = [
   { label: 'Services', href: '/services' },
   { label: 'Cart', href: '/cart' },
   { label: 'Contact', href: '/#contact' },
+  { label: 'Staff Login', href: '/staff/login'}
 ];
 
 const policyLinks = [
