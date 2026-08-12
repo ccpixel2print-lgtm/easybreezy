@@ -306,3 +306,185 @@ export function resetStaffPassword(token: string, id: string, password: string) 
     body: JSON.stringify({ password }),
   });
 }
+
+// ---- Catalog admin (Step 18) — ADMIN only ----
+
+export interface AdminCategory {
+  id: string;
+  name: string;
+  displayOrder?: number | null;
+  active?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AdminPincode {
+  id: string;
+  pincode: string;
+  areaName?: string | null;
+  city?: string | null;
+  active?: boolean;
+  [key: string]: unknown;
+}
+
+// Categories
+export function fetchCategories(token: string) {
+  return staffFetch<AdminCategory[]>('/admin/catalog/categories', token);
+}
+export function createCategory(
+  token: string,
+  body: { name: string; displayOrder?: number; active?: boolean },
+) {
+  return staffFetch<AdminCategory>('/admin/catalog/categories', token, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+export function updateCategory(
+  token: string,
+  id: string,
+  body: { name?: string; displayOrder?: number; active?: boolean },
+) {
+  return staffFetch<AdminCategory>(`/admin/catalog/categories/${id}`, token, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+export function deleteCategory(token: string, id: string) {
+  return staffFetch<unknown>(`/admin/catalog/categories/${id}`, token, { method: 'DELETE' });
+}
+
+// Pincodes
+export function fetchPincodes(token: string) {
+  return staffFetch<AdminPincode[]>('/admin/catalog/pincodes', token);
+}
+export function createPincode(
+  token: string,
+  body: { pincode: string; areaName?: string; city?: string; active?: boolean },
+) {
+  return staffFetch<AdminPincode>('/admin/catalog/pincodes', token, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+export function updatePincode(
+  token: string,
+  id: string,
+  body: { areaName?: string; city?: string; active?: boolean },
+) {
+  return staffFetch<AdminPincode>(`/admin/catalog/pincodes/${id}`, token, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+export function deletePincode(token: string, id: string) {
+  return staffFetch<unknown>(`/admin/catalog/pincodes/${id}`, token, { method: 'DELETE' });
+}
+
+// ---- Catalog admin: Services + Sub-services (ADMIN only) ----
+
+export type PricingType = 'FIXED' | 'HOURLY' | 'VISITING';
+
+export interface AdminSubService {
+  id: string;
+  serviceId?: string;
+  name: string;
+  pricingType?: PricingType;
+  description?: string | null;
+  basePrice?: number | null;   // paise
+  hourlyRate?: number | null;  // paise
+  visitFee?: number | null;    // paise
+  durationLabel?: string | null;
+  displayOrder?: number | null;
+  active?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AdminService {
+  id: string;
+  categoryId?: string;
+  category?: { id: string; name: string } | null;
+  name: string;
+  slug?: string;
+  description?: string | null;
+  longDescription?: string | null;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  hasSubServices?: boolean;
+  pricingType?: PricingType;
+  basePrice?: number | null;
+  hourlyRate?: number | null;
+  visitFee?: number | null;
+  startingPrice?: number | null;
+  durationLabel?: string | null;
+  displayOrder?: number | null;
+  active?: boolean;
+  subServices?: AdminSubService[];
+  [key: string]: unknown;
+}
+
+export interface ServicePayload {
+  categoryId: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  longDescription?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  hasSubServices?: boolean;
+  pricingType?: PricingType;
+  basePrice?: number;
+  hourlyRate?: number;
+  visitFee?: number;
+  startingPrice?: number;
+  durationLabel?: string;
+  displayOrder?: number;
+  active?: boolean;
+}
+
+export interface SubServicePayload {
+  serviceId: string;
+  name: string;
+  pricingType: PricingType; // required by backend
+  description?: string;
+  basePrice?: number;
+  hourlyRate?: number;
+  visitFee?: number;
+  durationLabel?: string;
+  displayOrder?: number;
+  active?: boolean;
+}
+
+export function fetchAdminServices(token: string, categoryId?: string) {
+  const qs = categoryId ? `?categoryId=${encodeURIComponent(categoryId)}` : '';
+  return staffFetch<AdminService[]>(`/admin/catalog/services${qs}`, token);
+}
+export function fetchAdminService(token: string, id: string) {
+  return staffFetch<AdminService>(`/admin/catalog/services/${id}`, token);
+}
+export function createService(token: string, body: ServicePayload) {
+  return staffFetch<AdminService>('/admin/catalog/services', token, {
+    method: 'POST', body: JSON.stringify(body),
+  });
+}
+export function updateService(token: string, id: string, body: Partial<ServicePayload>) {
+  return staffFetch<AdminService>(`/admin/catalog/services/${id}`, token, {
+    method: 'PATCH', body: JSON.stringify(body),
+  });
+}
+export function deleteService(token: string, id: string) {
+  return staffFetch<unknown>(`/admin/catalog/services/${id}`, token, { method: 'DELETE' });
+}
+
+export function createSubService(token: string, body: SubServicePayload) {
+  return staffFetch<AdminSubService>('/admin/catalog/sub-services', token, {
+    method: 'POST', body: JSON.stringify(body),
+  });
+}
+export function updateSubService(token: string, id: string, body: Partial<Omit<SubServicePayload, 'serviceId'>>) {
+  return staffFetch<AdminSubService>(`/admin/catalog/sub-services/${id}`, token, {
+    method: 'PATCH', body: JSON.stringify(body),
+  });
+}
+export function deleteSubService(token: string, id: string) {
+  return staffFetch<unknown>(`/admin/catalog/sub-services/${id}`, token, { method: 'DELETE' });
+}
