@@ -8,6 +8,8 @@ import CartBadge from '@/components/CartBadge';
 import SubServiceCard from '@/components/SubServiceCard';
 import AddToCartButton from '@/components/AddToCartButton';
 import { fetchServiceBySlug, fetchServiceSlugs } from '@/lib/api';
+import ServiceDetailContent from '@/components/ServiceDetailContent';
+import { getServiceContent } from '@/data/serviceContent';
 
 interface PageProps {
   params: { slug: string };
@@ -68,6 +70,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const service = await fetchServiceBySlug(params.slug);
   if (!service) notFound();
 
+  const content = getServiceContent(params.slug);
 
   return (
     <>
@@ -284,6 +287,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             </aside>
           </div>
         </section>
+        {content && <ServiceDetailContent content={content} />}
       </main>
       <Footer />
       <CartBadge />

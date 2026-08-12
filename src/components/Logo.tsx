@@ -20,7 +20,7 @@ export default function Logo({
       className={`flex items-center gap-2.5 ${className}`}
     >
       <span
-        className="relative flex-shrink-0 overflow-hidden rounded-full ring-2 ring-brand shadow-sm"
+        className="relative flex-shrink-0 overflow-hidden"// rounded-full ring-2 ring-brand shadow-sm"
         style={{ width: size, height: size }}
       >
         <Image
