@@ -500,6 +500,7 @@ export interface ConfigurableFee {
 }
 
 export interface PricingSettings {
+  gstEnabled: boolean;
   gstRate: number; // decimal, e.g. 0.18
   platformFee: ConfigurableFee;
   convenienceFee: ConfigurableFee;

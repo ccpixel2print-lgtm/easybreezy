@@ -21,6 +21,7 @@ export default function AdminSettingsPage() {
 
   // Local form state
   const [gstPercent, setGstPercent] = useState('18');
+  const [gstEnabled, setGstEnabled] = useState(true);
   const [platform, setPlatform] = useState<ConfigurableFee>({ enabled: false, type: 'FLAT', value: 0 });
   const [convenience, setConvenience] = useState<ConfigurableFee>({ enabled: false, type: 'FLAT', value: 0 });
 
@@ -31,6 +32,7 @@ export default function AdminSettingsPage() {
   const hydrate = useCallback((s: PricingSettings) => {
     setSettings(s);
     setGstPercent(String(Math.round(s.gstRate * 100)));
+    setGstEnabled(s.gstEnabled);
     setPlatform(s.platformFee);
     setConvenience(s.convenienceFee);
     setPlatformInput(
@@ -92,6 +94,7 @@ export default function AdminSettingsPage() {
     }
 
     const body: Partial<PricingSettings> = {
+      gstEnabled,
       gstRate: gstNum / 100,
       platformFee: { ...platform, value: platformValue },
       convenienceFee: { ...convenience, value: convenienceValue },
@@ -133,13 +136,25 @@ export default function AdminSettingsPage() {
       <div className="space-y-6 rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
         {/* GST */}
         <div>
-          <label className="block text-sm font-semibold text-ink">GST rate</label>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-ink">GST</label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-ink/70">
+              <input
+                type="checkbox"
+                checked={gstEnabled}
+                onChange={(e) => setGstEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-black/20"
+              />
+              Enabled
+            </label>
+          </div>
+          <div className={`mt-2 flex items-center gap-2 ${gstEnabled ? '' : 'opacity-50'}`}>
             <input
               type="number"
               min={0}
               max={100}
               value={gstPercent}
+              disabled={!gstEnabled}
               onChange={(e) => setGstPercent(e.target.value)}
               className="w-28 rounded-lg border border-black/10 px-3 py-2 text-sm"
             />

@@ -247,7 +247,11 @@ export interface CheckoutResponse {
   order: {
     id: string;
     orderNumber: string;
-    totalAmount: number;
+    subtotal?: number;        // paise — service charge
+    platformFee?: number;     // paise
+    convenienceFee?: number;  // paise
+    taxAmount?: number;       // paise — GST
+    totalAmount: number;      // paise
     paymentStatus: string;
     status: string;
   };
@@ -268,6 +272,29 @@ export async function submitCheckout(token: string, payload: CheckoutPayload): P
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || 'Checkout failed.');
   }
+  return res.json();
+}
+
+// ---- Pricing config (public, for checkout preview) ----
+
+export type FeeType = 'FLAT' | 'PERCENT';
+
+export interface ConfigurableFee {
+  enabled: boolean;
+  type: FeeType;
+  value: number; // paise if FLAT; whole-number percent if PERCENT
+}
+
+export interface PricingConfig {
+  gstEnabled: boolean;
+  gstRate: number; // decimal, e.g. 0.18
+  platformFee: ConfigurableFee;
+  convenienceFee: ConfigurableFee;
+}
+
+export async function fetchPricingConfig(): Promise<PricingConfig> {
+  const res = await fetch(`${API_URL}/pricing-config`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to load pricing.');
   return res.json();
 }
 

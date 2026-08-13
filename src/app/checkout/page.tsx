@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -11,12 +11,23 @@ import {
   checkPincode,
   submitCheckout,
   mockConfirmPayment,
+  fetchPricingConfig,
   type CheckoutResponse,
+  type PricingConfig,
 } from '@/lib/api';
 
 const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 const rupeesFromPaise = (paise: number) => `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
-const GST_RATE = 0.18;
+
+// Mirrors the backend computeFee, but works in rupees (cart items are in rupees).
+function computeFeeRupees(
+  fee: { enabled: boolean; type: 'FLAT' | 'PERCENT'; value: number },
+  base: number,
+): number {
+  if (!fee.enabled || fee.value <= 0) return 0;
+  if (fee.type === 'PERCENT') return Math.round(base * (fee.value / 100));
+  return Math.round(fee.value / 100); // fee.value is paise; convert to rupees
+}
 
 const TIME_WINDOWS = [
   '08:00 AM – 10:00 AM',
@@ -30,6 +41,7 @@ const TIME_WINDOWS = [
 export default function CheckoutPage() {
   const { items, clear } = useCart();
   const { user, token } = useAuth();
+  const [pricing, setPricing] = useState<PricingConfig | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [form, setForm] = useState({
@@ -52,11 +64,19 @@ export default function CheckoutPage() {
   const [payLoading, setPayLoading] = useState(false);
   const [paid, setPaid] = useState(false);
 
-  const { subtotal, gst, total } = useMemo(() => {
+  const { subtotal, platformFee, convenienceFee, gst, total } = useMemo(() => {
     const sub = items.reduce((s, it) => s + it.price * it.quantity, 0);
-    const g = Math.round(sub * GST_RATE);
-    return { subtotal: sub, gst: g, total: sub + g };
-  }, [items]);
+    const pf = pricing ? computeFeeRupees(pricing.platformFee, sub) : 0;
+    const cf = pricing ? computeFeeRupees(pricing.convenienceFee, sub) : 0;
+    const taxableBase = sub + pf + cf;
+    const rate = pricing ? (pricing.gstEnabled ? pricing.gstRate : 0) : 0.18;
+    const g = Math.round(taxableBase * rate);
+    return { subtotal: sub, platformFee: pf, convenienceFee: cf, gst: g, total: taxableBase + g };
+  }, [items, pricing]);
+
+  useEffect(() => {
+    fetchPricingConfig().then(setPricing).catch(() => setPricing(null));
+  }, []);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -375,13 +395,29 @@ export default function CheckoutPage() {
                   </ul>
                   <dl className="mt-4 space-y-2 border-t border-dashed border-gray-200 pt-4 text-sm">
                     <div className="flex justify-between">
-                      <dt className="text-ink/70">Subtotal</dt>
+                      <dt className="text-ink/70">Service charge</dt>
                       <dd className="font-semibold">{inr(subtotal)}</dd>
                     </div>
-                    <div className="flex justify-between">
-                      <dt className="text-ink/70">GST (18%)</dt>
-                      <dd className="font-semibold">{inr(gst)}</dd>
-                    </div>
+                    {platformFee > 0 && (
+                      <div className="flex justify-between">
+                        <dt className="text-ink/70">Platform fee</dt>
+                        <dd className="font-semibold">{inr(platformFee)}</dd>
+                      </div>
+                    )}
+                    {convenienceFee > 0 && (
+                      <div className="flex justify-between">
+                        <dt className="text-ink/70">Convenience fee</dt>
+                        <dd className="font-semibold">{inr(convenienceFee)}</dd>
+                      </div>
+                    )}
+                    {gst > 0 && (
+                      <div className="flex justify-between">
+                        <dt className="text-ink/70">
+                          GST{pricing?.gstEnabled ? ` (${Math.round(pricing.gstRate * 100)}%)` : ''}
+                        </dt>
+                        <dd className="font-semibold">{inr(gst)}</dd>
+                      </div>
+                    )}
                     <div className="flex justify-between border-t border-dashed border-gray-200 pt-2">
                       <dt className="text-base font-bold">Total</dt>
                       <dd className="text-xl font-extrabold text-brand">{inr(total)}</dd>
