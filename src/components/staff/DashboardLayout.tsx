@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { label: 'Staff', href: '/admin/staff', roles: ['ADMIN', 'SUPERVISOR'] },
   { label: 'Catalog', href: '/admin/catalog', roles: ['ADMIN'] },
   { label: 'My Jobs', href: '/employee', roles: ['EMPLOYEE'] },
+  { label: 'Settings', href: '/admin/settings', roles: ['ADMIN'] },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

@@ -488,3 +488,30 @@ export function updateSubService(token: string, id: string, body: Partial<Omit<S
 export function deleteSubService(token: string, id: string) {
   return staffFetch<unknown>(`/admin/catalog/sub-services/${id}`, token, { method: 'DELETE' });
 }
+
+// ---- Settings: pricing group (ADMIN only) ----
+
+export type FeeType = 'FLAT' | 'PERCENT';
+
+export interface ConfigurableFee {
+  enabled: boolean;
+  type: FeeType;
+  value: number; // paise if FLAT; whole-number percent if PERCENT
+}
+
+export interface PricingSettings {
+  gstRate: number; // decimal, e.g. 0.18
+  platformFee: ConfigurableFee;
+  convenienceFee: ConfigurableFee;
+}
+
+export function fetchPricingSettings(token: string) {
+  return staffFetch<PricingSettings>('/admin/settings/pricing', token);
+}
+
+export function updatePricingSettings(token: string, body: Partial<PricingSettings>) {
+  return staffFetch<PricingSettings>('/admin/settings/pricing', token, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
