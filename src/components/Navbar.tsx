@@ -7,9 +7,9 @@ import { useAuth } from '@/context/AuthContext';
 
 const navLinks = [
   { label: 'Home', href: '/#home' },
-  { label: 'About', href: '/#about' },
+  { label: 'About', href: '/about' },
   { label: 'Services', href: '/services' },
-  { label: 'Contact', href: '/#contact' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export default function Navbar() {

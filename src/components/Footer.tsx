@@ -3,18 +3,20 @@ import Logo from './Logo';
 
 const quickLinks = [
   { label: 'Home', href: '/#home' },
-  { label: 'About', href: '/#about' },
+  { label: 'About', href: '/#bout' },
   { label: 'Services', href: '/services' },
   { label: 'Cart', href: '/cart' },
-  { label: 'Contact', href: '/#contact' },
+  { label: 'Contact', href: '/contact' },
   { label: 'Staff Login', href: '/staff/login'}
 ];
 
 const policyLinks = [
   { label: 'Terms & Conditions', href: '/terms' },
   { label: 'Privacy Policy', href: '/privacy' },
-  { label: 'Cancellation & Refund', href: '/cancellation-refund' },
-  { label: 'Shipping Policy', href: '/shipping' },
+  { label: 'Cancellation Policy', href: '/cancellation-refund' },
+  { label: 'Service Delivery', href: '/shipping' },
+  { label: 'About Us', href: '/about' },
+  { label: 'Contact Us', href: '/contact' },
 ];
 
 const socials = [
@@ -49,8 +51,10 @@ export default function Footer() {
           <div className="md:col-span-2 lg:col-span-2">
             <Logo variant="light" size={48} />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
-              One App, All Services, Total Peace of Mind. Trusted, verified home
-              service professionals at your doorstep across India.
+              One App, All Services, Total Peace of Mind. We bring trusted home and
+              facility maintenance services to your doorstep, delivered by our own
+              trained technicians.
+
             </p>
             <div className="mt-5 flex items-center gap-3">
               {socials.map((s) => (

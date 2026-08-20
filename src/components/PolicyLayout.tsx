@@ -5,6 +5,8 @@ import Footer from './Footer';
 interface PolicyLayoutProps {
   title: string;
   intro?: string;
+  badge?: string;       // e.g. "Fair & Transparent"
+  badgeIcon?: string;   // e.g. "🛡️"
   children: ReactNode;
 }
 
@@ -12,7 +14,13 @@ interface PolicyLayoutProps {
  * Shared brand-styled shell for legal / policy pages.
  * Reuses the sticky navbar + footer. WhatsApp button is global via layout.tsx.
  */
-export default function PolicyLayout({ title, intro, children }: PolicyLayoutProps) {
+export default function PolicyLayout({
+  title,
+  intro,
+  badge = 'Legal',
+  badgeIcon,
+  children,
+}: PolicyLayoutProps) {
   return (
     <>
       <Navbar />
@@ -25,8 +33,12 @@ export default function PolicyLayout({ title, intro, children }: PolicyLayoutPro
           <div className="relative mx-auto max-w-3xl px-4 py-12 text-center sm:px-6 lg:px-8 lg:py-16">
             <div className="animate-fade-up">
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-brand shadow-soft ring-1 ring-brand/10">
-                <span className="flex h-2 w-2 rounded-full bg-accent" />
-                Legal
+                {badgeIcon ? (
+                  <span aria-hidden="true">{badgeIcon}</span>
+                ) : (
+                  <span className="flex h-2 w-2 rounded-full bg-accent" />
+                )}
+                {badge}
               </span>
               <h1 className="mx-auto mt-5 text-3xl font-extrabold leading-[1.15] tracking-tight text-brand sm:text-4xl">
                 {title}
@@ -43,7 +55,7 @@ export default function PolicyLayout({ title, intro, children }: PolicyLayoutPro
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <article className="prose-policy space-y-6 text-sm leading-relaxed text-ink/75">
               <p className="text-xs font-medium uppercase tracking-wider text-ink/40">
-                Last updated: 7 July 2026
+                Last updated: 20 August 2026
               </p>
               {children}
             </article>
