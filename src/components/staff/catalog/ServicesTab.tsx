@@ -5,6 +5,7 @@ import { useStaffAuth } from '@/context/StaffAuthContext';
 import {
   fetchAdminServices, fetchAdminService, deleteService,
   fetchCategories, deleteSubService,
+  updateService, updateSubService,
   StaffAuthError,
   type AdminService, type AdminSubService, type AdminCategory,
 } from '@/lib/staffApi';
@@ -84,6 +85,32 @@ export default function ServicesTab() {
     }
   }
 
+  async function toggleServiceActive(s: AdminService) {
+    if (!token) return;
+    const next = !(s.active ?? true);
+    setActionError(null);
+    try {
+      await updateService(token, s.id, { active: next });
+      await load();
+    } catch (err) {
+      if (err instanceof StaffAuthError) return logout();
+      setActionError(err instanceof Error ? err.message : 'Could not update service.');
+    }
+  }
+
+  async function toggleSubActive(serviceId: string, sub: AdminSubService) {
+    if (!token) return;
+    const next = !(sub.active ?? true);
+    setActionError(null);
+    try {
+      await updateSubService(token, sub.id, { active: next });
+      await refreshDetail(serviceId);
+    } catch (err) {
+      if (err instanceof StaffAuthError) return logout();
+      setActionError(err instanceof Error ? err.message : 'Could not update sub-service.');
+    }
+  }
+
   async function refreshDetail(serviceId: string) {
     if (!token) return;
     const full = await fetchAdminService(token, serviceId);
@@ -141,6 +168,16 @@ export default function ServicesTab() {
                   </button>
                   <div className="flex gap-2">
                     <button onClick={() => setEditingService(s)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint">Edit</button>
+                    <button
+                      onClick={() => toggleServiceActive(s)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                        (s.active ?? true)
+                          ? 'text-amber-600 hover:bg-amber-50'
+                          : 'text-green-600 hover:bg-green-50'
+                      }`}
+                    >
+                      {(s.active ?? true) ? 'Deactivate' : 'Activate'}
+                    </button>
                     <button onClick={() => removeService(s)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">Delete</button>
                   </div>
                 </div>
@@ -166,6 +203,16 @@ export default function ServicesTab() {
                             </div>
                             <div className="flex gap-2">
                               <button onClick={() => setSubModal({ serviceId: s.id, sub })} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-tint">Edit</button>
+                              <button
+                                onClick={() => toggleSubActive(s.id, sub)}
+                                className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${
+                                  (sub.active ?? true)
+                                    ? 'text-amber-600 hover:bg-amber-50'
+                                    : 'text-green-600 hover:bg-green-50'
+                                }`}
+                              >
+                                {(sub.active ?? true) ? 'Deactivate' : 'Activate'}
+                              </button>
                               <button onClick={() => removeSub(s.id, sub)} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Delete</button>
                             </div>
                           </div>
