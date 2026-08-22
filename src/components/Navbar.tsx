@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
 
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
 
+  const pathname = usePathname();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -46,15 +48,24 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="relative rounded-lg px-4 py-2 text-sm font-medium text-ink transition-colors hover:text-brand after:absolute after:inset-x-4 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-accent after:transition-transform hover:after:scale-x-100"
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = link.href.startsWith('/#')
+              ? pathname === '/'
+              : pathname === link.href;
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors after:absolute after:inset-x-4 after:-bottom-0.5 after:h-0.5 after:origin-left after:rounded-full after:bg-accent after:transition-transform ${
+                  isActive
+                    ? 'text-brand after:scale-x-100'
+                    : 'text-ink hover:text-brand after:scale-x-0 hover:after:scale-x-100'
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
           <Link
             href="/cart"
             aria-label="View cart"
@@ -139,16 +150,25 @@ export default function Navbar() {
         } transition-[max-height] duration-300 ease-in-out`}
       >
         <div className="space-y-1 px-4 pb-6 pt-3">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="block rounded-xl px-4 py-3 text-base font-medium text-ink transition-colors hover:bg-brand-tint hover:text-brand"
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = link.href.startsWith('/#')
+              ? pathname === '/'
+              : pathname === link.href;
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={`block rounded-xl px-4 py-3 text-base font-medium transition-colors ${
+                  isActive
+                    ? 'bg-brand-tint text-brand'
+                    : 'text-ink hover:bg-brand-tint hover:text-brand'
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
           <Link
             href="/cart"
             onClick={() => setOpen(false)}

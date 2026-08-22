@@ -1,23 +1,31 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { serviceCategories, type Service } from '@/data/services';
+import { type Service } from '@/data/services';
 import ServiceCard from './ServiceCard';
 
 /**
  * Client component: renders the filter tabs + the mapped B2C service grid.
- * The grid is produced by `.map()` over the shared `services` data array,
- * so it stays fully dynamic-ready.
+ * Category pills are derived from the services actually returned by the API,
+ * so deactivating a category/service in admin removes its pill automatically.
  */
 export default function ServicesGrid({ services }: { services: Service[] }) {
-  const [active, setActive] = useState<(typeof serviceCategories)[number]>('All');
+  // Build the pill list from live data: 'All' + each unique category present.
+  const categories = useMemo(() => {
+    const unique = Array.from(
+      new Set(services.map((s) => s.category).filter(Boolean)),
+    );
+    return ['All', ...unique];
+  }, [services]);
+
+  const [active, setActive] = useState<string>('All');
 
   const filtered = useMemo(
     () =>
       active === 'All'
         ? services
         : services.filter((s) => s.category === active),
-    [active]
+    [active, services],
   );
 
   return (
@@ -28,7 +36,7 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
         aria-label="Filter services by category"
         className="mb-10 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
       >
-        {serviceCategories.map((cat) => {
+        {categories.map((cat) => {
           const isActive = cat === active;
           return (
             <button
