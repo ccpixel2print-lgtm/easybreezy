@@ -1,15 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Reveal from './Reveal';
+import { fetchServices } from '@/lib/api';
 
-const services = [
-  { name: 'Plumber', slug: 'plumber', image: '/images/plumber.webp', desc: 'Expert plumbers for leaks, fittings & blockages.', alt: 'Uniformed Indian plumber fixing a tap in a modern home' },
-  { name: 'Electrician', slug: 'electrician', image: '/images/electrician.webp', desc: 'Certified electricians for wiring, switches & repairs.', alt: 'Indian electrician working on a switchboard' },
-  { name: 'Maid', slug: 'maid', image: '/images/maid.webp', desc: 'Reliable maids for daily cleaning & household help.', alt: 'Indian maid cleaning a modern living room' },
-  { name: 'Deep Cleaning', slug: 'deep-cleaning', image: '/images/deep-cleaning.webp', desc: 'Thorough deep cleaning for a spotless, fresh home.', alt: 'Professional team performing deep cleaning in a home' },
-];
+export default async function Services() {
+  const all = await fetchServices();
+  const services = all.slice(0, 4); // featured preview: first 4 active services
 
-export default function Services() {
   return (
     <section id="services" className="scroll-mt-24 bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -29,7 +26,7 @@ export default function Services() {
         <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {services.map((s, i) => (
             <Reveal
-              key={s.name}
+              key={s.slug}
               delay={i * 90}
               className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-card-hover"
             >
@@ -37,7 +34,7 @@ export default function Services() {
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <Image
                     src={s.image}
-                    alt={s.alt}
+                    alt={s.imageAlt}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -48,7 +45,7 @@ export default function Services() {
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   <h3 className="text-lg font-bold text-ink">{s.name}</h3>
-                  <p className="mt-1 flex-1 text-sm text-ink/65">{s.desc}</p>
+                  <p className="mt-1 flex-1 text-sm text-ink/65">{s.description}</p>
                   <span className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 group-hover:bg-brand-dark">
                     Book Now
                     <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
