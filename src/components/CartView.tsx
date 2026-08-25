@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import ImagePlaceholder from './ImagePlaceholder';
+/**import ImagePlaceholder from './ImagePlaceholder';*/
 
 const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 const GST_RATE = 0.18;
@@ -53,8 +53,8 @@ export default function CartView() {
               className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-card ring-1 ring-black/5 transition-shadow hover:shadow-card-hover sm:flex-row sm:p-5"
             >
               {/* Placeholder image */}
-              <ImagePlaceholder className="aspect-[16/10] w-full flex-shrink-0 sm:aspect-square sm:w-28" />
-
+              {/*<ImagePlaceholder className="aspect-[16/10] w-full flex-shrink-0 sm:aspect-square sm:w-28" />
+                */}
               {/* Details */}
               <div className="flex flex-1 flex-col">
                 <div className="flex items-start justify-between gap-3">

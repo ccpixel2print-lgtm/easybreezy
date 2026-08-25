@@ -1,4 +1,4 @@
-import Image from 'next/image';
+/**import Image from 'next/image';*/
 import type { SubService } from '@/data/services';
 import AddToCartButton from './AddToCartButton';
 
@@ -27,7 +27,7 @@ export default function SubServiceCard({ subService, serviceId, serviceSlug, ind
       className="group flex animate-fade-up flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-card-hover sm:flex-row"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-[16/10] w-full flex-shrink-0 overflow-hidden sm:aspect-square sm:w-40">
+      {/* <div className="relative aspect-[16/10] w-full flex-shrink-0 overflow-hidden sm:aspect-square sm:w-40">
         <Image
           src={subService.image}
           alt={subService.imageAlt}
@@ -35,7 +35,7 @@ export default function SubServiceCard({ subService, serviceId, serviceSlug, ind
           sizes="(max-width: 640px) 100vw, 160px"
           className="object-cover transition-transform duration-500 group-hover:scale-110"
         />
-      </div>
+      </div> */}
 
       {/* Body */}
       <div className="flex flex-1 flex-col p-4 sm:p-5">
