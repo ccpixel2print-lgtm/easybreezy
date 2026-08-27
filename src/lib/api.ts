@@ -235,9 +235,11 @@ export interface CheckoutPayload {
 }
 
 export interface PaymentInfo {
-  provider: 'mock' | 'cod' | 'razorpay';
+  provider: 'mock' | 'cod' | 'phonepe';
   confirmImmediately: boolean;
   gatewayOrderId: string | null;
+  redirectUrl?: string | null;      // PhonePe hosted checkout URL
+  merchantOrderId?: string | null;  // == order id
   paymentId: string;
   orderId: string;
   amount: number;
@@ -315,3 +317,43 @@ export async function mockConfirmPayment(token: string, orderId: string) {
   return res.json();
 }
 
+// ---- PhonePe ----
+
+export type PhonePeState = 'PAID' | 'PENDING' | 'FAILED';
+
+export interface PhonePeStatusResult {
+  state: PhonePeState;
+  orderNumber?: string;
+  totalAmount?: number; // paise
+}
+
+/**
+ * Called on the return page after PhonePe redirects back.
+ * Hits the backend status endpoint, which verifies with PhonePe
+ * (server-to-server) and settles the order idempotently.
+ */
+export async function fetchPhonePeStatus(
+  orderId: string,
+): Promise<PhonePeStatusResult> {
+  const res = await fetch(
+    `${API_URL}/payments/phonepe/status?orderId=${encodeURIComponent(orderId)}`,
+    { cache: 'no-store' },
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Could not verify payment status.');
+  }
+  const order = await res.json();
+  // The status endpoint returns the settled order (with bookings/payments).
+  const state: PhonePeState =
+    order?.paymentStatus === 'PAID'
+      ? 'PAID'
+      : order?.paymentStatus === 'FAILED'
+        ? 'FAILED'
+        : 'PENDING';
+  return {
+    state,
+    orderNumber: order?.orderNumber,
+    totalAmount: order?.totalAmount,
+  };
+}

@@ -129,7 +129,15 @@ export default function CheckoutPage() {
       });
 
       clear();
+
+      // PhonePe: redirect the browser straight to the hosted checkout.
+      if (res.payment.provider === 'phonepe' && res.payment.redirectUrl) {
+        window.location.href = res.payment.redirectUrl;
+        return;
+      }
+
       setResult(res);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Checkout failed.');
     } finally {
@@ -155,7 +163,6 @@ export default function CheckoutPage() {
   if (result) {
     const isCod = result.payment.provider === 'cod';
     const isMock = result.payment.provider === 'mock';
-    const isRazorpay = result.payment.provider === 'razorpay';
 
     return (
       <>
@@ -206,13 +213,6 @@ export default function CheckoutPage() {
                       : `Pay Now (Test) — ${rupeesFromPaise(result.order.totalAmount)}`}
                   </button>
                 </div>
-              )}
-
-              {/* RAZORPAY (placeholder until real integration) */}
-              {isRazorpay && !paid && (
-                <p className="mt-4 rounded-lg bg-brand-tint px-3 py-2 text-xs text-brand">
-                  Online payment via Razorpay will open here (integration pending).
-                </p>
               )}
 
               {paid && (

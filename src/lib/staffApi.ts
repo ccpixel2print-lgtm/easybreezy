@@ -516,3 +516,23 @@ export function updatePricingSettings(token: string, body: Partial<PricingSettin
     body: JSON.stringify(body),
   });
 }
+
+// ---- Settings: payments group (ADMIN only) ----
+
+export type PaymentProviderName = 'mock' | 'cod' | 'phonepe';
+
+export interface PaymentsSettings {
+  activeProvider: PaymentProviderName;
+  enabledProviders: PaymentProviderName[];
+}
+
+export function fetchPaymentsSettings(token: string) {
+  return staffFetch<PaymentsSettings>('/admin/settings/payments', token);
+}
+
+export function updatePaymentsSettings(token: string, body: Partial<PaymentsSettings>) {
+  return staffFetch<PaymentsSettings>('/admin/settings/payments', token, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}

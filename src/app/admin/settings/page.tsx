@@ -8,6 +8,10 @@ import {
   PricingSettings,
   ConfigurableFee,
   FeeType,
+  fetchPaymentsSettings,
+  updatePaymentsSettings,
+  PaymentsSettings,
+  PaymentProviderName,
 } from '@/lib/staffApi';
 import { rupeesToPaise, paiseToRupeeInput } from '@/lib/format';
 
@@ -190,6 +194,8 @@ export default function AdminSettingsPage() {
           {saved && <span className="text-sm font-medium text-green-600">Saved ✓</span>}
         </div>
       </div>
+      {/* Payments provider selection */}
+      <PaymentsSettingsCard />
     </div>
   );
 }
@@ -256,3 +262,170 @@ function FeeEditor({
     </div>
   );
 }
+
+/** Payments provider selection (which gateway is live at checkout). */
+function PaymentsSettingsCard() {
+  const { token, logout } = useStaffAuth();
+  const [settings, setSettings] = useState<PaymentsSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const [active, setActive] = useState<PaymentProviderName>('mock');
+  const [enabled, setEnabled] = useState<PaymentProviderName[]>(['mock', 'cod']);
+
+  const ALL_PROVIDERS: { id: PaymentProviderName; label: string; hint: string }[] = [
+    { id: 'mock', label: 'Mock (testing)', hint: 'Simulated payments — no real money. For internal testing only.' },
+    { id: 'cod', label: 'Cash on Delivery', hint: 'Customer pays the technician directly; order enters ops immediately.' },
+    { id: 'phonepe', label: 'PhonePe', hint: 'Live UPI / cards / netbanking via PhonePe Standard Checkout.' },
+  ];
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    fetchPaymentsSettings(token)
+      .then((s) => {
+        setSettings(s);
+        setActive(s.activeProvider);
+        setEnabled(s.enabledProviders);
+        setError(null);
+      })
+      .catch((e: any) => {
+        if (e?.name === 'StaffAuthError') { logout(); return; }
+        setError(e?.message || 'Failed to load payment settings.');
+      })
+      .finally(() => setLoading(false));
+  }, [token, logout]);
+
+  function toggleEnabled(id: PaymentProviderName) {
+    setEnabled((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    );
+  }
+
+  async function handleSave() {
+    if (!token) return;
+    setError(null);
+    setSaved(false);
+
+    // Guard: active provider must be one of the enabled ones.
+    if (!enabled.includes(active)) {
+      setError('The active provider must also be enabled.');
+      return;
+    }
+    if (enabled.length === 0) {
+      setError('At least one provider must be enabled.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updated = await updatePaymentsSettings(token, {
+        activeProvider: active,
+        enabledProviders: enabled,
+      });
+      setSettings(updated);
+      setActive(updated.activeProvider);
+      setEnabled(updated.enabledProviders);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e: any) {
+      if (e?.name === 'StaffAuthError') { logout(); return; }
+      setError(e?.message || 'Failed to save payment settings.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6 text-sm text-ink/50 shadow-sm">
+        Loading payment settings…
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-ink">Payments</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Choose which payment method is live at checkout. Use “Mock” for testing.
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4 rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
+        <div className="space-y-3">
+          {ALL_PROVIDERS.map((p) => {
+            const isEnabled = enabled.includes(p.id);
+            const isActive = active === p.id;
+            return (
+              <div
+                key={p.id}
+                className={`flex items-start justify-between gap-4 rounded-xl border p-4 transition-colors ${
+                  isActive ? 'border-brand bg-brand-tint' : 'border-black/10'
+                }`}
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-ink">{p.label}</span>
+                    {isActive && (
+                      <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-ink/50">{p.hint}</p>
+                </div>
+
+                <div className="flex flex-col items-end gap-2">
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-ink/70">
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={() => toggleEnabled(p.id)}
+                      className="h-4 w-4 rounded border-black/20"
+                    />
+                    Enabled
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!isEnabled || isActive}
+                    onClick={() => setActive(p.id)}
+                    className="rounded-full border border-brand px-3 py-1 text-xs font-semibold text-brand transition-colors hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-brand"
+                  >
+                    {isActive ? 'Current' : 'Set active'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-3 border-t border-black/5 pt-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-dark active:scale-95 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save payment settings'}
+          </button>
+          {saved && <span className="text-sm font-medium text-green-600">Saved ✓</span>}
+          {settings && (
+            <span className="ml-auto text-xs text-ink/40">
+              Live: <strong className="text-ink/60">{settings.activeProvider}</strong>
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
