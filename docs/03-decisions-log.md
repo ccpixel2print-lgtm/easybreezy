@@ -22,7 +22,7 @@ Breezy presents **externally and legally as the principal service provider**. We
 select and engage technicians on a per-visit/per-work **contract** basis and are
 directly responsible to the customer.
 **Rationale:** required for payment-gateway onboarding (Razorpay rejected; PhonePe
-put the application on hold citing policy expectations). All public-facing content
+approved after the service-provider positioning was applied). All public-facing content
 (site copy, T&C, privacy, delivery, about, contact) must reflect the service-
 provider model and must not use "marketplace/aggregator/intermediary/seller"
 language. Internally, the contractor revenue-split + wallet model still applies.
@@ -39,6 +39,22 @@ Order total = serviceCharge + platformFee + convenienceFee, then GST on that bas
 (GST itself toggleable). Platform & convenience fees are each admin-configurable
 (enabled, FLAT/PERCENT, value). **Discounts/coupons and tips deferred to Phase 2.**
 Tips, when built, will have an admin-configurable platform/employee split.
+
+### D. Payment gateway: PhonePe (Razorpay dropped)
+Razorpay onboarding was rejected; PhonePe was approved and is now the live
+gateway via `@phonepe-pg/pg-sdk-node@2.0.6` (StandardCheckout). The PG-agnostic
+interface/registry is unchanged — PhonePe is just the active provider.
+**Rationale:** gateway availability. The generic `POST /payments/verify` route
+originally planned is superseded by PhonePe's server-to-server webhook
+(`/payments/phonepe/webhook`) plus a client-polled `verifyAndSettle` status route.
+Webhook subscribes to Checkout Order Completed + Failed only (no refund events yet).
+
+### E. Bookings list ordering (locked)
+Admin + Supervisor bookings lists sort **ascending by scheduledDate, then by slot
+start time** — i.e. the **soonest job to attend is at the top**. This is an
+operations queue, not a "most-recently-created" feed.
+**Rationale:** staff work the nearest-due job first; ascending scheduledDate is
+the correct priority order.
 
 ## Technical decisions (this project)
 - **Money in paise** everywhere (backend); frontend converts at edges.

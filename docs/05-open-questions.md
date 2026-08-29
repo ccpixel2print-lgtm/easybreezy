@@ -1,11 +1,14 @@
 # Open Questions / Pending Decisions
 
 ## Payments
-- **`POST /payments/verify` callback route** (real-gateway verify → `markOrderPaid`)
-  + frontend checkout handler — deferred until live gateway keys exist. Build when
-  PhonePe/Razorpay approved.
-- Does `Order` track the chosen provider (`paymentProvider` column)? If yes,
-  persist it in `initiatePayment`; if no, add the column. **Needs confirmation.**
+- ~~`POST /payments/verify` callback route~~ — RESOLVED (decisions §D): PhonePe
+  uses webhook + `verifyAndSettle`; no generic verify route needed.
+- **`Order.paymentProvider` column** — still OPEN. `Payment.provider` exists, but
+  `Order` does not persist the chosen provider and the schema comment still says
+  `"razorpay"`. Decide: (a) add `Order.paymentProvider` + persist in
+  `initiatePayment`, or (b) rely on the `Payment` row. Recommend (a) for cleaner
+  queries. Also update the stale `Payment.provider` comment `"razorpay"` →
+  `"phonepe"`.
 
 ## Policy / compliance
 - **Named Grievance Officer** for the Privacy Policy (name + designation) — using

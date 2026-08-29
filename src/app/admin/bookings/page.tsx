@@ -15,6 +15,30 @@ import {
 import StatusBadge from '@/components/staff/StatusBadge';
 import AssignModal from '@/components/staff/AssignModal';
 
+/** Format an ISO/date string to DD-MM-YY. */
+function formatDateDDMMYY(value?: string | null): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd}-${mm}-${yy}`;
+}
+
+/** Join the booking's address snapshot fields into one readable line. */
+function formatAddress(b: AdminBooking): string {
+  const parts = [
+    b.addressLine1,
+    b.addressLine2,
+    b.area,
+    b.city,
+    b.pincode,
+  ].filter((p) => p != null && String(p).trim() !== '');
+  return parts.join(', ');
+}
+
+
 const STATUS_FILTERS = ['CONFIRMED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', ''];
 
 export default function AdminBookingsPage() {
@@ -153,16 +177,35 @@ export default function AdminBookingsPage() {
                   <StatusBadge status={b.status ?? 'UNKNOWN'} />
                 </div>
 
-                <div className="mt-3 space-y-1 text-sm text-ink/60">
-                  {b.scheduledDate && (
-                    <p>{[b.scheduledDate, b.scheduledTimeWindow].filter(Boolean).join(' · ')}</p>
+                {/* Prominent date + slot */}
+                <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-2xl font-extrabold tracking-tight text-ink">
+                    {formatDateDDMMYY(b.scheduledDate) || '—'}
+                  </span>
+                  {b.scheduledTimeWindow && (
+                    <span className="text-lg font-bold text-brand">
+                      {b.scheduledTimeWindow}
+                    </span>
                   )}
-                  {b.customerName && <p>{b.customerName}{b.customerPhone ? ` · ${b.customerPhone}` : ''}</p>}
-                  {b.pincode && <p>Pincode: {b.pincode}</p>}
+                </div>
+
+                <div className="mt-3 space-y-1 text-sm text-ink/60">
+                  {formatAddress(b) && (
+                    <p className="text-ink/80">{formatAddress(b)}</p>
+                  )}
+                  {b.customerName && (
+                    <p>
+                      {b.customerName}
+                      {b.customerPhone ? `  ${b.customerPhone}` : ''}
+                    </p>
+                  )}
                   <p className="pt-1">
                     {assigned ? (
                       <span className="font-medium text-ink">
-                        Assigned to: {b.assignedEmployee?.fullName || b.assignedEmployee?.email || b.assignedEmployeeId}
+                        Assigned to:{' '}
+                        {b.assignedEmployee?.fullName ||
+                          b.assignedEmployee?.email ||
+                          b.assignedEmployeeId}
                       </span>
                     ) : (
                       <span className="text-amber-700">Unassigned</span>

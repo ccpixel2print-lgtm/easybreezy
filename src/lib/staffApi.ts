@@ -219,6 +219,11 @@ export interface AdminBooking {
   scheduledDate?: string | null;
   scheduledTimeWindow?: string | null;
   address?: string | null;
+  // full service-location snapshot (from Booking model)
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  area?: string | null;
+  city?: string | null;
   pincode?: string | null;
   customerName?: string | null;
   customerPhone?: string | null;
@@ -227,6 +232,7 @@ export interface AdminBooking {
   assignedAt?: string | null;
   [key: string]: unknown;
 }
+
 
 export interface StaffMember {
   id: string;

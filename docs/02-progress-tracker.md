@@ -6,10 +6,21 @@ versioned trackers.
 **Legend:** ✅ done & live-tested · 🟡 coded, local, NOT pushed/tested · ⏳ not
 started · 🔵 Phase 2 (deferred)
 
-> **Push status:** the last confirmed-live state is the public/customer site +
-> full staff dashboard suite. **Everything since is 🟡 (coded locally, unpushed,
-> untested):** the entire pricing/charges block, admin Settings UI, checkout
-> breakdown, GST-optional, and the payments PG-agnostic redesign.
+> **Push status:** public/customer site, full staff dashboard suite, AND the
+> PG-agnostic payments redesign with the PhonePe provider are pushed to `main`.
+> **Still 🟡 (coded locally, unpushed/untested):** the pricing/charges block,
+> admin Settings UI, checkout breakdown, GST-optional, and the Phase 0
+> bookings-card/sort changes. When in doubt, re-read the actual source file.
+
+
+## Phase 0 — immediate polish
+- Bookings-card redesign (Admin + Supervisor share one page): date `DD-MM-YY`
+  and slot in large bold, full address (addressLine1/2, area, city, pincode)
+  shown — 🟡 (coded, not committed)
+- Backend `listBookings` sort → soonest-to-attend first (scheduledDate asc,
+  then scheduledTimeWindow, then createdAt); `where` retyped
+  `Prisma.BookingWhereInput` to clear no-unsafe-* lint — 🟡 (coded, not committed)
+- Payment gating on assignment (assign blocked unless order CONFIRMED) — ✅
 
 ## Foundation & Public/Customer surface
 - Public marketing site (landing, services, about, contact) — ✅
@@ -40,14 +51,18 @@ started · 🔵 Phase 2 (deferred)
 - Admin Settings tab (frontend) + `staffApi` fetchers — 🟡
 - Public `/pricing-config` endpoint + checkout breakdown display — 🟡
 
-## Payments (PG-agnostic; online-prepaid + admin-toggleable COD)
+## Payments (PG-agnostic; PhonePe live)
 - Provider interface + mock/cod providers — ✅ (pre-existing)
 - PG-agnostic redesign: registry, `payments` settings group, per-request resolve,
-  admin GET/PATCH `/admin/settings/payments` — 🟡
-- Razorpay provider (dormant until keys + enable) — 🟡
-- `POST /payments/verify` callback route + frontend handler — ⏳
-- COD as admin toggle — 🟡 (via payments settings)
-- Order/payment status transitions on success — ⏳
+  admin GET/PATCH `/admin/settings/payments` — ✅ (pushed to main)
+- PhonePe provider (`@phonepe-pg/pg-sdk-node@2.0.6`): createPayment + redirectUrl,
+  verifyPayment (getOrderStatus mapping), validateWebhook — ✅
+- PhonePe webhook `POST /payments/phonepe/webhook` + `verifyAndSettle` status
+  route (supersedes the old generic `/payments/verify` idea) — ✅
+- COD as admin toggle — ✅ (via payments settings)
+- Order/payment status transitions on success (`markOrderPaid` → order PAID,
+  bookings CONFIRMED) — ✅
+- Razorpay — ❌ dropped (rejected); replaced by PhonePe (see decisions log §D)
 - Visiting two-payment flow (visit fee + quote balance) — 🔵/⏳
 
 ## Employee/Supervisor operational workflow (Master Doc Phase 1; sequenced after v1 core)
