@@ -10,6 +10,16 @@
   queries. Also update the stale `Payment.provider` comment `"razorpay"` →
   `"phonepe"`.
 
+## Workflow / operations
+- **Supervisor booking-detail view** — DEFERRED by decision. List endpoint kept
+  light (no photos). Need a detail drawer/page so supervisors review before/after
+  photos before confirming completion. Confirm works now; photo review pending.
+- **Photo enforcement** — currently optional-with-nudge. Flip to hard-required
+  (block work-done without ≥1 before + ≥1 after) once R2 is live if desired.
+- **Wallet credit on completion** — `confirmCompletion` has a TODO hook; wire it
+  into the money-model phase (credit net-of-GST split, ideally in the same DB
+  transaction as the status flip).
+
 ## Policy / compliance
 - **Named Grievance Officer** for the Privacy Policy (name + designation) — using
   generic email for now.

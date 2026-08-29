@@ -182,12 +182,26 @@ export interface EmployeeJob {
   customerName?: string | null;
   customerPhone?: string | null;
   assignedAt?: string | null;
+  acceptedAt?: string | null;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
   startedAt?: string | null;
+  workDoneAt?: string | null;
   completedAt?: string | null;
+  confirmedAt?: string | null;
   notes?: string | null;
+  photos?: BookingPhoto[];
   // loose until confirmed against the live payload
   [key: string]: unknown;
 }
+
+export interface BookingPhoto {
+  id: string;
+  kind: 'BEFORE' | 'AFTER';
+  url: string;
+  createdAt?: string;
+}
+
 
 export function fetchEmployeeJobs(token: string, status?: string) {
   const qs = status ? `?status=${encodeURIComponent(status)}` : '';
@@ -198,15 +212,46 @@ export function fetchEmployeeJob(token: string, id: string) {
   return staffFetch<EmployeeJob>(`/employee/jobs/${id}`, token);
 }
 
+export function acceptEmployeeJob(token: string, id: string) {
+  return staffFetch<EmployeeJob>(`/employee/jobs/${id}/accept`, token, { method: 'POST' });
+}
+
+export function rejectEmployeeJob(token: string, id: string, reason?: string) {
+  return staffFetch<EmployeeJob>(`/employee/jobs/${id}/reject`, token, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+}
+
 export function startEmployeeJob(token: string, id: string) {
   return staffFetch<EmployeeJob>(`/employee/jobs/${id}/start`, token, { method: 'POST' });
 }
 
-export function completeEmployeeJob(token: string, id: string, notes?: string) {
-  return staffFetch<EmployeeJob>(`/employee/jobs/${id}/complete`, token, {
+export function workDoneEmployeeJob(token: string, id: string, notes?: string) {
+  return staffFetch<EmployeeJob>(`/employee/jobs/${id}/work-done`, token, {
     method: 'POST',
     body: JSON.stringify({ notes }),
   });
+}
+
+/** Photo upload uses multipart/form-data, so it bypasses the JSON staffFetch helper. */
+export async function uploadJobPhoto(
+  token: string,
+  id: string,
+  kind: 'before' | 'after',
+  file: File,
+): Promise<BookingPhoto> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_URL}/employee/jobs/${id}/photos?kind=${kind}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` }, // no Content-Type: browser sets multipart boundary
+    body: form,
+    cache: 'no-store',
+  });
+  if (res.status === 401) throw new StaffAuthError();
+  if (!res.ok) return parseError(res, `Upload failed (${res.status}).`);
+  return res.json() as Promise<BookingPhoto>;
 }
 
 export interface AdminBooking {
@@ -274,6 +319,12 @@ export function reassignBooking(token: string, bookingId: string, employeeId: st
 
 export function unassignBooking(token: string, bookingId: string) {
   return staffFetch<AdminBooking>(`/admin/bookings/${bookingId}/unassign`, token, {
+    method: 'POST',
+  });
+}
+
+export function confirmBookingCompletion(token: string, bookingId: string) {
+  return staffFetch<AdminBooking>(`/admin/bookings/${bookingId}/confirm`, token, {
     method: 'POST',
   });
 }

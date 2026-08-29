@@ -8,6 +8,7 @@ import {
   assignBooking,
   reassignBooking,
   unassignBooking,
+  confirmBookingCompletion,
   StaffAuthError,
   type AdminBooking,
   type StaffMember,
@@ -38,8 +39,15 @@ function formatAddress(b: AdminBooking): string {
   return parts.join(', ');
 }
 
-
-const STATUS_FILTERS = ['CONFIRMED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', ''];
+const STATUS_FILTERS = [
+  'CONFIRMED',
+  'ASSIGNED',
+  'ACCEPTED',
+  'IN_PROGRESS',
+  'AWAITING_CONFIRMATION',
+  'COMPLETED',
+  '',
+];
 
 export default function AdminBookingsPage() {
   const { token, logout } = useStaffAuth();
@@ -93,6 +101,18 @@ export default function AdminBookingsPage() {
     } catch (err) {
       if (err instanceof StaffAuthError) return logout();
       setActionError(err instanceof Error ? err.message : 'Could not unassign.');
+    }
+  }
+
+    async function handleConfirm(b: AdminBooking) {
+    if (!token) return;
+    setActionError(null);
+    try {
+      await confirmBookingCompletion(token, b.id);
+      await load();
+    } catch (err) {
+      if (err instanceof StaffAuthError) return logout();
+      setActionError(err instanceof Error ? err.message : 'Could not confirm completion.');
     }
   }
 
@@ -164,7 +184,11 @@ export default function AdminBookingsPage() {
           {bookings.map((b) => {
             const assigned = b.assignedEmployee || b.assignedEmployeeId;
             const canAssign = b.status === 'CONFIRMED';
-            const canReassign = b.status === 'ASSIGNED' || b.status === 'IN_PROGRESS';
+            const canReassign = ['ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION'].includes(
+              b.status ?? '',
+            );
+            const canConfirm = b.status === 'AWAITING_CONFIRMATION';
+            const photos = (b.photos as { id: string; kind: string; url: string }[] | undefined) ?? [];
             return (
               <div key={b.id} className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-black/5">
                 <div className="flex items-start justify-between gap-3">
@@ -213,6 +237,21 @@ export default function AdminBookingsPage() {
                   </p>
                 </div>
 
+                {/* Photo review (shown when the booking payload includes photos) */}
+                {photos.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {photos.map((p) => (
+                      <a key={p.id} href={p.url} target="_blank" rel="noreferrer" className="relative block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.url} alt={`${p.kind} photo`} className="h-16 w-16 rounded-lg object-cover ring-1 ring-black/5" />
+                        <span className="absolute left-0.5 top-0.5 rounded bg-black/60 px-1 py-0.5 text-[9px] font-semibold uppercase text-white">
+                          {p.kind}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-black/5 pt-4">
                   {canAssign && (
@@ -221,6 +260,14 @@ export default function AdminBookingsPage() {
                       className="rounded-full bg-brand px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark"
                     >
                       Assign
+                    </button>
+                  )}
+                  {canConfirm && (
+                    <button
+                      onClick={() => handleConfirm(b)}
+                      className="rounded-full bg-green-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-green-700"
+                    >
+                      Confirm Complete
                     </button>
                   )}
                   {canReassign && (

@@ -6,7 +6,14 @@ import { useStaffAuth } from '@/context/StaffAuthContext';
 import { fetchEmployeeJobs, StaffAuthError, type EmployeeJob } from '@/lib/staffApi';
 import StatusBadge from '@/components/staff/StatusBadge';
 
-const FILTERS = ['ALL', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED'] as const;
+const FILTERS = [
+  'ALL',
+  'ASSIGNED',
+  'ACCEPTED',
+  'IN_PROGRESS',
+  'AWAITING_CONFIRMATION',
+  'COMPLETED',
+] as const;
 
 export default function EmployeeJobsPage() {
   const { token, logout } = useStaffAuth();
