@@ -73,7 +73,8 @@ started · 🔵 Phase 2 (deferred)
   🟡 (coded, not committed). Lifecycle now:
   `CONFIRMED → ASSIGNED → ACCEPTED → IN_PROGRESS → AWAITING_CONFIRMATION →
   COMPLETED`; reject returns booking to CONFIRMED queue (clears workflow
-  timestamps on reassign). Wallet-credit hook is a TODO inside `confirmCompletion`.
+    timestamps on reassign). Wallet-credit hook is now LIVE inside
+  `confirmCompletion` — credit + status flip run in one transaction.
 - Before/after photo upload (R2/S3-compatible storage; optional-with-nudge) —
   🟡 (coded, not committed). `BookingPhoto` model + `/employee/jobs/:id/photos`
   upload endpoint; StorageService lazily builds the R2 client and errors clearly
@@ -92,9 +93,28 @@ started · 🔵 Phase 2 (deferred)
 - Quote raising (employee or supervisor; incl. supervisor-added extra charges) — ⏳
 
 ## Money model depth (Master Doc Phase 1)
-- Per-employee revenue split (net-of-GST, configurable toggles) — ⏳
-- Append-only wallet ledger (credit on closure, debit on refund/settlement) — ⏳
-- Settlement screen + payout recording + notification — ⏳
+- Per-employee revenue split — 🟡 (coded, not committed). Payout base =
+  `Booking.serviceAmount` (pre-tax service charge). Rate resolution:
+  per-employee `User.payoutRatePercent` if set, else global
+  `payouts.defaultPayoutPercent` (settings group, default 70%). Whole-number
+  percent, paise math (`round(serviceAmount × pct/100)`).
+- Append-only wallet ledger (`WalletLedger`) — 🟡 (coded, not committed).
+  Entry types: JOB_CREDIT (+), PAYOUT (−), REVERSAL (−), ADJUSTMENT (±).
+  Balance = SUM(amount). Credit written in the SAME transaction as the
+  `AWAITING_CONFIRMATION → COMPLETED` flip; idempotent via
+  `@@unique([bookingId, type])` so double-confirm can't double-credit.
+- Payout recording (debit) — 🟡 (coded, not committed). Admin/supervisor
+  `POST /admin/bookings/employees/:employeeId/wallet/payout`; validates amount
+  ≤ balance; stored negative. Employee wallet screen + admin wallet panel
+  (balance, totals, ledger, record-payout, set-rate) built.
+- Reversal/refund clawback (customer refund → employee debit) — 🟡 service
+  method `reverseForBooking` present (REVERSAL entry, idempotent per booking);
+  no UI/endpoint wired yet — ⏳ trigger from refunds flow later.
+- Global payout default settings — 🟡 (coded, not committed).
+  `GET/PATCH /admin/settings/payouts` + `staffApi` fetchers.
+- `wallet_ledger_and_payout_rate` Prisma migration — ⏳ not yet deployed.
+- Settlement screen + payout notification — ⏳ (payout recording done; a
+  dedicated settlement/batch screen + notifications still pending).
 - Refunds queue → gateway partial refund — ⏳
 
 ## Cross-cutting (Master Doc Phase 1)
@@ -120,7 +140,7 @@ reconciliation.
 - Rotate test admin credentials — ⏳
 - Verify `MAIL_FROM` domain — ⏳
 - Run `prisma migrate deploy` on DB (pending migrations: `add_app_settings`,
-  `order_charges`, `booking_completion_spine`) — ⏳
+  `order_charges`, `booking_completion_spine`, `wallet_ledger_and_payout_rate`) — ⏳
 - Configure Cloudflare R2 (`R2_*` env vars) before go-live so photo upload
   works; flow is coded to fail gracefully until then — ⏳
 - Confirm `NEXT_PUBLIC_API_URL` on frontend host — ⏳

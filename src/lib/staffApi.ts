@@ -593,3 +593,95 @@ export function updatePaymentsSettings(token: string, body: Partial<PaymentsSett
     body: JSON.stringify(body),
   });
 }
+
+// ---- Settings: payouts group (ADMIN only) ----
+
+export interface PayoutsSettings {
+  defaultPayoutPercent: number; // whole-number percent, e.g. 70 = 70%
+}
+
+export function fetchPayoutsSettings(token: string) {
+  return staffFetch<PayoutsSettings>('/admin/settings/payouts', token);
+}
+
+export function updatePayoutsSettings(token: string, body: Partial<PayoutsSettings>) {
+  return staffFetch<PayoutsSettings>('/admin/settings/payouts', token, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+
+// ---- Wallet: employee (own) ----
+
+export type WalletEntryType = 'JOB_CREDIT' | 'PAYOUT' | 'REVERSAL' | 'ADJUSTMENT';
+
+export interface WalletEntry {
+  id: string;
+  type: WalletEntryType;
+  amount: number;        // paise; positive = credit, negative = debit
+  bookingId?: string | null;
+  note?: string | null;
+  createdById?: string | null;
+  createdAt: string;
+}
+
+export interface WalletSummary {
+  balance: number;       // paise
+  totalEarned: number;   // paise
+  totalPaidOut: number;  // paise (positive magnitude)
+  totalReversed: number; // paise (positive magnitude)
+  totalAdjusted: number; // paise (signed)
+}
+
+/** Employee's own wallet summary. */
+export function fetchMyWallet(token: string) {
+  return staffFetch<WalletSummary>('/employee/jobs/wallet', token);
+}
+
+/** Employee's own wallet ledger (newest first). */
+export function fetchMyWalletLedger(token: string) {
+  return staffFetch<WalletEntry[]>('/employee/jobs/wallet/ledger', token);
+}
+
+// ---- Wallet: admin/supervisor (any employee) ----
+
+export function fetchEmployeeWallet(token: string, employeeId: string) {
+  return staffFetch<WalletSummary>(
+    `/admin/bookings/employees/${employeeId}/wallet`,
+    token,
+  );
+}
+
+export function fetchEmployeeWalletLedger(token: string, employeeId: string) {
+  return staffFetch<WalletEntry[]>(
+    `/admin/bookings/employees/${employeeId}/wallet/ledger`,
+    token,
+  );
+}
+
+/** Record a payout (debit). amount in paise, positive. */
+export function recordEmployeePayout(
+  token: string,
+  employeeId: string,
+  amount: number,
+  note?: string,
+) {
+  return staffFetch<WalletEntry>(
+    `/admin/bookings/employees/${employeeId}/wallet/payout`,
+    token,
+    { method: 'POST', body: JSON.stringify({ amount, note }) },
+  );
+}
+
+/** Set an employee's per-employee payout rate; pass null to fall back to global. */
+export function setEmployeePayoutRate(
+  token: string,
+  employeeId: string,
+  payoutRatePercent: number | null,
+) {
+  return staffFetch<{ id: string; fullName?: string | null; payoutRatePercent: number | null }>(
+    `/admin/bookings/employees/${employeeId}/payout-rate`,
+    token,
+    { method: 'POST', body: JSON.stringify({ payoutRatePercent }) },
+  );
+}
