@@ -290,15 +290,15 @@ export interface AdminBooking {
   [key: string]: unknown;
 }
 
-
 export interface StaffMember {
   id: string;
   fullName?: string | null;
   email?: string | null;
   phone?: string | null;
   role: 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE' | string;
-  status?: string; // ACTIVE / INACTIVE
+  status?: string;
   active?: boolean;
+  payoutRatePercent?: number | null;
   [key: string]: unknown;
 }
 
