@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useStaffAuth } from '@/context/StaffAuthContext';
 import {
   fetchStaffList,
@@ -12,6 +12,7 @@ import {
   type CreateStaffPayload,
 } from '@/lib/staffApi';
 import StatusBadge from '@/components/staff/StatusBadge';
+import EmployeeWalletPanel from '@/app/admin/_components/EmployeeWalletPanel';
 
 export default function AdminStaffPage() {
   const { token, staff: me, logout } = useStaffAuth();
@@ -23,6 +24,8 @@ export default function AdminStaffPage() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [resetFor, setResetFor] = useState<StaffMember | null>(null);
+
+  const [walletFor, setWalletFor] = useState<string | null>(null);
 
   // A supervisor can only create employees; an admin can create both.
   const canCreateSupervisor = me?.role === 'ADMIN';
@@ -110,39 +113,59 @@ export default function AdminStaffPage() {
                 {list.map((s) => {
                   const active = isActive(s);
                   const self = s.id === me?.id;
-                  return (
-                    <tr key={s.id} className="hover:bg-cloud/50">
-                      <td className="px-5 py-3 font-medium text-ink">{s.fullName ?? '—'}</td>
-                      <td className="px-5 py-3 text-ink/70">{s.email ?? '—'}</td>
-                      <td className="px-5 py-3">
-                        <StatusBadge status={s.role} />
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className={`text-xs font-semibold ${active ? 'text-green-600' : 'text-red-500'}`}>
-                          {active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => setResetFor(s)}
-                            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-                          >
-                            Reset password
-                          </button>
-                          {!self && (
+                   return (
+                    <React.Fragment key={s.id}>
+                      <tr className="hover:bg-cloud/50">
+                        <td className="px-5 py-3 font-medium text-ink">{s.fullName ?? '—'}</td>
+                        <td className="px-5 py-3 text-ink/70">{s.email ?? '—'}</td>
+                        <td className="px-5 py-3">
+                          <StatusBadge status={s.role} />
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`text-xs font-semibold ${active ? 'text-green-600' : 'text-red-500'}`}>
+                            {active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex justify-end gap-2">
+                            {s.role === 'EMPLOYEE' && (
+                              <button
+                                onClick={() => setWalletFor(walletFor === s.id ? null : s.id)}
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
+                              >
+                                {walletFor === s.id ? 'Hide wallet' : 'Wallet'}
+                              </button>
+                            )}
                             <button
-                              onClick={() => toggleActive(s)}
-                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                                active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'
-                              }`}
+                              onClick={() => setResetFor(s)}
+                              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
                             >
-                              {active ? 'Deactivate' : 'Activate'}
+                              Reset password
                             </button>
-                          )}
-                        </div>
-                      </td>
+                            {!self && (
+                              <button
+                                onClick={() => toggleActive(s)}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                                  active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'
+                                }`}
+                              >
+                                {active ? 'Deactivate' : 'Activate'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
                     </tr>
+                    {walletFor === s.id && (
+                        <tr>
+                          <td colSpan={5} className="bg-cloud/30 px-5 py-4">
+                            <EmployeeWalletPanel
+                              employeeId={s.id}
+                              currentRatePercent={s.payoutRatePercent as number | null | undefined}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>

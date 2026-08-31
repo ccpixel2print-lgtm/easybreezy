@@ -12,6 +12,9 @@ import {
   updatePaymentsSettings,
   PaymentsSettings,
   PaymentProviderName,
+  fetchPayoutsSettings,
+  updatePayoutsSettings,
+  PayoutsSettings,
 } from '@/lib/staffApi';
 import { rupeesToPaise, paiseToRupeeInput } from '@/lib/format';
 
@@ -196,9 +199,13 @@ export default function AdminSettingsPage() {
       </div>
       {/* Payments provider selection */}
       <PaymentsSettingsCard />
+
+      {/* Employee payout default */}
+      <PayoutsSettingsCard />
     </div>
   );
 }
+
 
 /** Reusable editor for one configurable fee (enabled + type + value). */
 function FeeEditor({
@@ -429,3 +436,108 @@ function PaymentsSettingsCard() {
   );
 }
 
+/** Global default employee payout rate (used when an employee has no per-employee rate). */
+function PayoutsSettingsCard() {
+  const { token, logout } = useStaffAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [percent, setPercent] = useState('70');
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    fetchPayoutsSettings(token)
+      .then((s) => {
+        setPercent(String(s.defaultPayoutPercent));
+        setError(null);
+      })
+      .catch((e: any) => {
+        if (e?.name === 'StaffAuthError') { logout(); return; }
+        setError(e?.message || 'Failed to load payout settings.');
+      })
+      .finally(() => setLoading(false));
+  }, [token, logout]);
+
+  async function handleSave() {
+    if (!token) return;
+    setError(null);
+    setSaved(false);
+    const n = Number(percent);
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      setError('Default payout must be a whole number between 0 and 100.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const updated = await updatePayoutsSettings(token, { defaultPayoutPercent: n });
+      setPercent(String(updated.defaultPayoutPercent));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e: any) {
+      if (e?.name === 'StaffAuthError') { logout(); return; }
+      setError(e?.message || 'Failed to save payout settings.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6 text-sm text-ink/50 shadow-sm">
+        Loading payout settings…
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-ink">Employee payouts</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Default share of a job&apos;s service charge (pre-tax) credited to the
+          employee on completion. Per-employee rates (set on the Staff page)
+          override this default.
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4 rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
+        <div>
+          <label className="text-sm font-semibold text-ink">Default payout rate</label>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={percent}
+              onChange={(e) => setPercent(e.target.value)}
+              className="w-28 rounded-lg border border-black/10 px-3 py-2 text-sm"
+            />
+            <span className="text-sm text-ink/60">% of service charge</span>
+          </div>
+          <p className="mt-1 text-xs text-ink/50">
+            Applied when an employee has no individual rate set.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 border-t border-black/5 pt-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-dark active:scale-95 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save payout settings'}
+          </button>
+          {saved && <span className="text-sm font-medium text-green-600">Saved ✓</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
