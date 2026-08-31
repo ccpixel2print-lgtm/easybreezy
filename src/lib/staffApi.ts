@@ -58,6 +58,18 @@ export async function fetchStaffMe(token: string): Promise<AuthUser> {
   return staffFetch<AuthUser>('/auth/me', token);
 }
 
+export interface UpdateProfilePayload {
+  fullName?: string;
+  phone?: string;
+}
+
+export function updateStaffMe(token: string, payload: UpdateProfilePayload) {
+  return staffFetch<AuthUser>('/auth/me', token, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
 // ---- Admin / Supervisor read views (Step 17) ----
 
 export interface DashboardSummary {
