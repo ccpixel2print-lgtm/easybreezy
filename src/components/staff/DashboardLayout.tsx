@@ -90,7 +90,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
 
           <div className="ml-auto flex items-center gap-3">
-            <Link href="/admin/profile" className="text-right transition-opacity hover:opacity-70">
+            <Link
+              href={staff?.role === 'EMPLOYEE' ? '/employee/profile' : '/admin/profile'}
+              className="text-right transition-opacity hover:opacity-70"
+            >
               <p className="text-sm font-semibold text-ink">{staff?.fullName || staff?.email}</p>
               <p className="text-xs text-ink/50">{staff?.role}</p>
             </Link>
