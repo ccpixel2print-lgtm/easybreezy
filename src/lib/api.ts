@@ -168,6 +168,7 @@ export interface AuthUser {
   email: string;
   role: 'CUSTOMER' | 'EMPLOYEE' | 'SUPERVISOR' | 'ADMIN';
   fullName?: string | null;
+  phone?: string | null;
 }
 
 export interface AuthResult {

@@ -16,9 +16,13 @@
   photos before confirming completion. Confirm works now; photo review pending.
 - **Photo enforcement** — currently optional-with-nudge. Flip to hard-required
   (block work-done without ≥1 before + ≥1 after) once R2 is live if desired.
-- **Wallet credit on completion** — `confirmCompletion` has a TODO hook; wire it
-  into the money-model phase (credit net-of-GST split, ideally in the same DB
-  transaction as the status flip).
+- ~~**Wallet credit on completion**~~ — RESOLVED (money-model phase). Employee
+  wallet is credited inside the same `$transaction` as the status flip to
+  COMPLETED in `assignments.service.ts` `confirmCompletion`, via
+  `WalletService.creditForCompletion` (JOB_CREDIT, net split using
+  `employee.payoutRatePercent ?? global defaultPayoutPercent`). Idempotent on
+  `@@unique([bookingId, type])`. Reversal hook (`reverseForBooking`) available
+  for refunds/cancellations.
 
 ## Policy / compliance
 - **Named Grievance Officer** for the Privacy Policy (name + designation) — using
@@ -36,6 +40,9 @@
   earlier but direction is unconfirmed given two-VPS-now / one-VPS-later.
 
 ## Sequencing
-- After the pricing/payments block is pushed & tested, confirm next block:
-  `PATCH /auth/me` (quick win) → payment lifecycle → notifications → invoices →
-  employee/supervisor workflow + money model → hardening.
+- Pricing/payments block, Phase 0 bookings-card/sort, and the money model are
+  DONE and live on `main`. Current block: `PATCH /auth/me` (quick win) — backend
+  + `updateStaffMe` fetcher are committed; profile-edit UI in progress.
+- Remaining order: payment lifecycle → notifications → invoices →
+  employee/supervisor workflow (supervisor booking-detail/photo-review) →
+  hardening.

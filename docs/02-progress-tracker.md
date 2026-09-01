@@ -18,10 +18,10 @@ started · 🔵 Phase 2 (deferred)
 ## Phase 0 — immediate polish
 - Bookings-card redesign (Admin + Supervisor share one page): date `DD-MM-YY`
   and slot in large bold, full address (addressLine1/2, area, city, pincode)
-  shown — 🟡 (coded, not committed)
+  shown — ✅
 - Backend `listBookings` sort → soonest-to-attend first (scheduledDate asc,
   then scheduledTimeWindow, then createdAt); `where` retyped
-  `Prisma.BookingWhereInput` to clear no-unsafe-* lint — 🟡 (coded, not committed)
+  `Prisma.BookingWhereInput` to clear no-unsafe-* lint — ✅
 - Payment gating on assignment (assign blocked unless order CONFIRMED) — ✅
 
 ## Foundation & Public/Customer surface
