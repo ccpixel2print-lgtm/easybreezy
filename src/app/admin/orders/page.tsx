@@ -155,7 +155,11 @@ export default function AdminOrdersPage() {
                   <tr key={o.id} className="hover:bg-cloud/50">
                     <td className="px-5 py-3 font-medium text-ink">{o.orderNumber ?? o.id}</td>
                     <td className="px-5 py-3 text-ink/70">
-                      {o.customerName ?? o.customerEmail ?? '—'}
+                      {o.contactName ??
+                        o.customerName ??
+                        o.contactEmail ??
+                        o.customerEmail ??
+                        ''}
                     </td>
                     <td className="px-5 py-3 text-ink/70">{formatRupees(o.totalAmount)}</td>
                     <td className="px-5 py-3">
@@ -165,7 +169,11 @@ export default function AdminOrdersPage() {
                       {o.status ? <StatusBadge status={o.status} /> : '—'}
                     </td>
                     <td className="px-5 py-3 text-ink/60">
-                      {o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN') : '—'}
+                      {o.placedAt
+                        ? new Date(o.placedAt).toLocaleDateString('en-IN')
+                        : o.createdAt
+                          ? new Date(o.createdAt).toLocaleDateString('en-IN')
+                          : ''}
                     </td>
                   </tr>
                 ))}

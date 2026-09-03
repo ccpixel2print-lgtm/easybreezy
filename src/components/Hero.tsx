@@ -44,7 +44,7 @@ export default function Hero() {
         <div className="animate-fade-up text-center lg:text-left">
           <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-brand shadow-soft ring-1 ring-brand/10">
             <span className="flex h-2 w-2 rounded-full bg-accent" />
-            India&apos;s trusted home-services marketplace
+            India&apos;s trusted home-services company
           </span>
 
           <h1 className="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight text-brand sm:text-5xl lg:text-[3.4rem]">

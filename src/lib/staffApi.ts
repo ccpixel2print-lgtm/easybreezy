@@ -91,12 +91,21 @@ export function fetchDashboard(token: string) {
 export interface AdminOrder {
   id: string;
   orderNumber?: string;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  subtotal?: number | null;     // paise
+  taxAmount?: number | null;    // paise
+  totalAmount?: number | null;  // paise
+  status?: string;
+  paymentStatus?: string;
+  city?: string | null;
+  pincode?: string | null;
+  placedAt?: string;
+  // legacy aliases (kept optional so nothing else breaks)
   customerName?: string | null;
   customerEmail?: string | null;
   customerPhone?: string | null;
-  totalAmount?: number | null; // paise
-  status?: string;
-  paymentStatus?: string;
   createdAt?: string;
   [key: string]: unknown;
 }
@@ -708,4 +717,24 @@ export function setEmployeePayoutRate(
     token,
     { method: 'POST', body: JSON.stringify({ payoutRatePercent }) },
   );
+}
+
+// ---- Settings: notifications group (ADMIN only) ----
+
+export interface NotificationsSettings {
+  ccEmail: string; // optional internal address BCC'd on customer/employee emails; '' = off
+}
+
+export function fetchNotificationsSettings(token: string) {
+  return staffFetch<NotificationsSettings>('/admin/settings/notifications', token);
+}
+
+export function updateNotificationsSettings(
+  token: string,
+  body: Partial<NotificationsSettings>,
+) {
+  return staffFetch<NotificationsSettings>('/admin/settings/notifications', token, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
 }

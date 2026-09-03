@@ -15,6 +15,9 @@ import {
   fetchPayoutsSettings,
   updatePayoutsSettings,
   PayoutsSettings,
+  fetchNotificationsSettings,
+  updateNotificationsSettings,
+  NotificationsSettings,
 } from '@/lib/staffApi';
 import { rupeesToPaise, paiseToRupeeInput } from '@/lib/format';
 
@@ -202,6 +205,9 @@ export default function AdminSettingsPage() {
 
       {/* Employee payout default */}
       <PayoutsSettingsCard />
+
+      {/* Notification CC/BCC address */}
+      <NotificationsSettingsCard />
     </div>
   );
 }
@@ -534,6 +540,110 @@ function PayoutsSettingsCard() {
             className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-dark active:scale-95 disabled:opacity-60"
           >
             {saving ? 'Saving…' : 'Save payout settings'}
+          </button>
+          {saved && <span className="text-sm font-medium text-green-600">Saved ✓</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Optional internal address BCC'd on every customer/employee notification email. */
+function NotificationsSettingsCard() {
+  const { token, logout } = useStaffAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [ccEmail, setCcEmail] = useState('');
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    fetchNotificationsSettings(token)
+      .then((s) => {
+        setCcEmail(s.ccEmail ?? '');
+        setError(null);
+      })
+      .catch((e: any) => {
+        if (e?.name === 'StaffAuthError') { logout(); return; }
+        setError(e?.message || 'Failed to load notification settings.');
+      })
+      .finally(() => setLoading(false));
+  }, [token, logout]);
+
+  async function handleSave() {
+    if (!token) return;
+    setError(null);
+    setSaved(false);
+
+    const trimmed = ccEmail.trim();
+    // Empty is allowed (feature off). If set, validate shape client-side too.
+    if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError('Please enter a valid email address, or leave it blank to disable.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updated = await updateNotificationsSettings(token, { ccEmail: trimmed });
+      setCcEmail(updated.ccEmail ?? '');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e: any) {
+      if (e?.name === 'StaffAuthError') { logout(); return; }
+      setError(e?.message || 'Failed to save notification settings.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6 text-sm text-ink/50 shadow-sm">
+        Loading notification settings…
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-ink">Notifications</h2>
+        <p className="mt-1 text-sm text-ink/60">
+          Optionally receive a blind copy (BCC) of every email sent to customers
+          and employees — useful for monitoring. Leave blank to disable.
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4 rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
+        <div>
+          <label className="text-sm font-semibold text-ink">CC/BCC email address</label>
+          <input
+            type="email"
+            value={ccEmail}
+            onChange={(e) => setCcEmail(e.target.value)}
+            placeholder="e.g. ops@easybreezy.in"
+            className="mt-2 w-full max-w-md rounded-lg border border-black/10 px-3 py-2 text-sm"
+          />
+          <p className="mt-1 text-xs text-ink/50">
+            This address is added as a BCC, so recipients won&apos;t see it.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 border-t border-black/5 pt-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-brand-dark active:scale-95 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save notification settings'}
           </button>
           {saved && <span className="text-sm font-medium text-green-600">Saved ✓</span>}
         </div>
