@@ -282,6 +282,13 @@ export interface AdminBooking {
   area?: string | null;
   city?: string | null;
   pincode?: string | null;
+    customer?: {
+    id: string;
+    fullName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
+  // legacy flat fields (kept optional; backend now sends nested `customer`)
   customerName?: string | null;
   customerPhone?: string | null;
   assignedEmployeeId?: string | null;

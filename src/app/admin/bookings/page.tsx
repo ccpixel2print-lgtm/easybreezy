@@ -217,12 +217,27 @@ export default function AdminBookingsPage() {
                   {formatAddress(b) && (
                     <p className="text-ink/80">{formatAddress(b)}</p>
                   )}
-                  {b.customerName && (
-                    <p>
-                      {b.customerName}
-                      {b.customerPhone ? `  ${b.customerPhone}` : ''}
-                    </p>
-                  )}
+                  {(() => {
+                    const name = b.customer?.fullName ?? b.customerName;
+                    const phone = b.customer?.phone ?? b.customerPhone;
+                    const email = b.customer?.email;
+                    if (!name && !phone && !email) return null;
+                    return (
+                      <div className="rounded-lg bg-brand-tint/40 px-3 py-2">
+                        {name && <p className="font-medium text-ink">{name}</p>}
+                        {phone && (
+                          <p className="text-ink/70">
+                            <a href={`tel:${phone}`} className="hover:text-brand">{phone}</a>
+                          </p>
+                        )}
+                        {email && (
+                          <p className="text-ink/70">
+                            <a href={`mailto:${email}`} className="hover:text-brand">{email}</a>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <p className="pt-1">
                     {assigned ? (
                       <span className="font-medium text-ink">

@@ -63,8 +63,31 @@ started · 🔵 Phase 2 (deferred)
 - PhonePe webhook `POST /payments/phonepe/webhook` + `verifyAndSettle` status
   route (supersedes the old generic `/payments/verify` idea) — ✅
 - COD as admin toggle — ✅ (via payments settings)
-- Order/payment status transitions on success (`markOrderPaid` → order PAID,
+- - Order/payment status transitions on success (`markOrderPaid` → order PAID,
   bookings CONFIRMED) — ✅
+- Payment lifecycle (this session):
+  - Admin order-level full refund/cancel (`POST /admin/orders/:id/refund`,
+    ADMIN-only): order → CANCELLED, paid payment → REFUNDED, pending → FAILED,
+    bookings → CANCELLED, and each `JOB_CREDIT` clawed back via
+    `WalletService.reverseForBooking` (exact credited amount, idempotent per
+    booking) — all in one `$transaction`.
+  - Customer self-cancel of an unpaid order (`POST /me/orders/:id/cancel`):
+    only `PENDING_PAYMENT` orders with no bookings advanced into ops; pending
+    payments → FAILED, bookings → CANCELLED. Recovery path is cancel +
+    re-checkout (Option B — merchantOrderId stays == Order.id; no true retry).
+  - Guarded settlement: `markOrderPaid` now refuses to settle a
+    CANCELLED/REFUNDED order (late/duplicate webhook can't resurrect a dead
+    order); already-PAID is an idempotent no-op.
+  - Stale-order expiry: `expireStalePendingOrders(minutes)` cancels orders stuck
+    in `PENDING_PAYMENT` past a cutoff (skips COD/ops-advanced). Exposed as
+    `POST /admin/orders/expire-stale` (ADMIN-only). Trigger is a DEFERRED
+    follow-up — wire an external cron (e.g. cron-job.org) to hit this endpoint;
+    no in-app scheduler yet.
+- Partial refunds (`PARTIALLY_REFUNDED`) — 🔵 Phase 2 (order-level full
+  refund/cancel only for now).
+- Real gateway (PhonePe) money-movement refund — ⏳ deferred; current refund
+  records internal state only (`PaymentProvider.refund` is an optional,
+  unimplemented hook).
 - Razorpay — ❌ dropped (rejected); replaced by PhonePe (see decisions log §D)
 - Visiting two-payment flow (visit fee + quote balance) — 🔵/⏳
 
@@ -107,22 +130,29 @@ started · 🔵 Phase 2 (deferred)
   `POST /admin/bookings/employees/:employeeId/wallet/payout`; validates amount
   ≤ balance; stored negative. Employee wallet screen + admin wallet panel
   (balance, totals, ledger, record-payout, set-rate) built.
-- Reversal/refund clawback (customer refund → employee debit) — 🟡 service
-  method `reverseForBooking` present (REVERSAL entry, idempotent per booking);
-  no UI/endpoint wired yet — ⏳ trigger from refunds flow later.
+- - Reversal/refund clawback (customer refund → employee debit) — ✅ wired.
+  `reverseForBooking` now accepts an optional `tx` (enlists in the refund
+  transaction) and is called by the admin refund flow, reversing each booking's
+  exact `JOB_CREDIT`. Idempotent per booking (`@@unique([bookingId, type])`).
 - Global payout default settings — 🟡 (coded, not committed).
   `GET/PATCH /admin/settings/payouts` + `staffApi` fetchers.
 - `wallet_ledger_and_payout_rate` Prisma migration — ⏳ not yet deployed.
 - Settlement screen + payout notification — ⏳ (payout recording done; a
   dedicated settlement/batch screen + notifications still pending).
-- Refunds queue → gateway partial refund — ⏳
+- Refunds: order-level full refund/cancel done (see Payments section).
+  Refunds queue UI + gateway partial refund — ⏳ / 🔵.
+
 
 ## Cross-cutting (Master Doc Phase 1)
 - Channel-agnostic notification engine (in-app + email live, WhatsApp-ready) — ⏳
 - GST invoice PDF generation — ⏳
-- Enforced status lifecycles (§8) — 🟡 booking lifecycle now enforced end-to-end
-  in service layer (accept→…→confirm); order/payment lifecycles still enum-only
-- Profile `PATCH /auth/me` — ⏳
+- Enforced status lifecycles (§8) — 🟡 booking lifecycle enforced end-to-end
+  (accept→…→confirm). Order/payment lifecycle now guarded too: settlement
+  refuses terminal orders, refund/cancel/expiry transitions are explicit and
+  transactional. Remaining enum-only edges: visiting two-payment flow.
+- Profile `PATCH /auth/me` — ✅ backend (name/phone, validated) + shared
+  `ProfileForm` at `/admin/profile` and `/employee/profile`, role-aware topbar
+  link.
 
 ## Phase 2 (🔵)
 Coupons/discounts/referrals · customer tips (with admin platform/employee split) ·

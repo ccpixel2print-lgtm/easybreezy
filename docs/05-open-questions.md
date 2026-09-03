@@ -9,6 +9,18 @@
   `initiatePayment`, or (b) rely on the `Payment` row. Recommend (a) for cleaner
   queries. Also update the stale `Payment.provider` comment `"razorpay"` →
   `"phonepe"`.
+  - ~~Failed/abandoned payment recovery~~ — RESOLVED (Option B): no in-place
+  retry; `merchantOrderId` stays == `Order.id`. Customer cancels the unpaid
+  order (`POST /me/orders/:id/cancel`) and re-checkouts (new order = new id).
+  Keeps the verified PhonePe verify/webhook chain untouched.
+- **Stale-order expiry trigger** — OPEN (low priority). `expireStalePendingOrders`
+  + `POST /admin/orders/expire-stale` exist; needs an external cron
+  (e.g. cron-job.org) pointed at the endpoint. Decide cadence (e.g. hourly,
+  minutes=60) and whether to later move to an in-app `@nestjs/schedule` cron.
+- **Gateway refund money-movement** — OPEN. Admin refund currently records
+  internal state only (order/payment/booking/wallet). Implementing real PhonePe
+  refunds needs `PaymentProvider.refund` + SDK call + refund status handling.
+
 
 ## Workflow / operations
 - **Supervisor booking-detail view** — DEFERRED by decision. List endpoint kept
@@ -40,9 +52,9 @@
   earlier but direction is unconfirmed given two-VPS-now / one-VPS-later.
 
 ## Sequencing
-- Pricing/payments block, Phase 0 bookings-card/sort, and the money model are
-  DONE and live on `main`. Current block: `PATCH /auth/me` (quick win) — backend
-  + `updateStaffMe` fetcher are committed; profile-edit UI in progress.
-- Remaining order: payment lifecycle → notifications → invoices →
-  employee/supervisor workflow (supervisor booking-detail/photo-review) →
-  hardening.
+- Done: pricing/payments block, Phase 0 bookings-card/sort, money model,
+  `PATCH /auth/me` (profile edit, both roles), and the payment lifecycle
+  (refund/cancel, guarded settlement, expiry method).
+- Current position: payment lifecycle complete → **next: notifications** →
+  invoices → employee/supervisor workflow (supervisor booking-detail/
+  photo-review) → hardening.
