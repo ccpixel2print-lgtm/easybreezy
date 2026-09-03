@@ -288,7 +288,12 @@ export interface AdminBooking {
     email?: string | null;
     phone?: string | null;
   } | null;
-  // legacy flat fields (kept optional; backend now sends nested `customer`)
+  order?: {
+    contactName?: string | null;
+    contactPhone?: string | null;
+    contactEmail?: string | null;
+  } | null;
+  // legacy flat fields (kept optional)
   customerName?: string | null;
   customerPhone?: string | null;
   assignedEmployeeId?: string | null;

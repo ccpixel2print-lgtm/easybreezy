@@ -218,9 +218,11 @@ export default function AdminBookingsPage() {
                     <p className="text-ink/80">{formatAddress(b)}</p>
                   )}
                   {(() => {
-                    const name = b.customer?.fullName ?? b.customerName;
-                    const phone = b.customer?.phone ?? b.customerPhone;
-                    const email = b.customer?.email;
+                    const name =
+                      b.customer?.fullName ?? b.order?.contactName ?? b.customerName;
+                    const phone =
+                      b.customer?.phone ?? b.order?.contactPhone ?? b.customerPhone;
+                    const email = b.customer?.email ?? b.order?.contactEmail;
                     if (!name && !phone && !email) return null;
                     return (
                       <div className="rounded-lg bg-brand-tint/40 px-3 py-2">
