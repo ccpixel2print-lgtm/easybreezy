@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import Logo from '@/components/Logo';
 import { useStaffAuth } from '@/context/StaffAuthContext';
 import type { AuthUser } from '@/lib/api';
+import NotificationBell from '@/components/staff/NotificationBell';
 
 type Role = AuthUser['role'];
 
@@ -23,6 +24,7 @@ const NAV: NavItem[] = [
   { label: 'Staff', href: '/admin/staff', roles: ['ADMIN', 'SUPERVISOR'] },
   { label: 'Catalog', href: '/admin/catalog', roles: ['ADMIN'] },
   { label: 'My Jobs', href: '/employee', roles: ['EMPLOYEE'] },
+  { label: 'Wallet', href: '/employee/wallet', roles: ['EMPLOYEE'] },
   { label: 'Settings', href: '/admin/settings', roles: ['ADMIN'] },
 ];
 
@@ -90,6 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
 
           <div className="ml-auto flex items-center gap-3">
+            <NotificationBell />
             <Link
               href={staff?.role === 'EMPLOYEE' ? '/employee/profile' : '/admin/profile'}
               className="text-right transition-opacity hover:opacity-70"

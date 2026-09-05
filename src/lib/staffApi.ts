@@ -738,3 +738,42 @@ export function updateNotificationsSettings(
     body: JSON.stringify(body),
   });
 }
+
+// ---- Notifications (all authenticated roles; /me/notifications) ----
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  data?: Record<string, unknown> | null;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+/** Recent notifications for the current user, newest first (default 30). */
+export function fetchNotifications(token: string, limit = 30) {
+  return staffFetch<AppNotification[]>(
+    `/me/notifications?limit=${limit}`,
+    token,
+  );
+}
+
+/** Unread count for the badge. */
+export function fetchUnreadCount(token: string) {
+  return staffFetch<{ count: number }>('/me/notifications/unread-count', token);
+}
+
+/** Mark one notification read. */
+export function markNotificationRead(token: string, id: string) {
+  return staffFetch<{ ok: true }>(`/me/notifications/${id}/read`, token, {
+    method: 'PATCH',
+  });
+}
+
+/** Mark all read. */
+export function markAllNotificationsRead(token: string) {
+  return staffFetch<{ ok: true }>('/me/notifications/read-all', token, {
+    method: 'PATCH',
+  });
+}

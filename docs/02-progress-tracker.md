@@ -31,7 +31,12 @@ started · 🔵 Phase 2 (deferred)
 - Pincode serviceability at add-to-cart + out-of-area lead capture — ✅
 - Customer email-OTP auth — ✅
 - Checkout creating Order + Bookings — ✅
-- Customer account: booking status + history — 🟡 partial
+- Customer account: booking status + history — 🟡 partial. Full customer area
+  (Profile / Bookings / Refund-Cancellations) scoped but NOT built. Constraint
+  (locked): it is NOT a separate dashboard shell — the customer stays on the
+  normal website with the existing public nav/chrome intact; the only addition
+  is a dropdown under the customer name/email in the existing header linking to
+  the three pages, which render inside the website's own layout.
 - GST invoice PDF download — ⏳
 - Visiting-flow quote review/approve + balance payment — 🔵/⏳
 - Completion confirmation (supervisor-confirmed; customer-facing view later) — 🟡
@@ -45,6 +50,15 @@ started · 🔵 Phase 2 (deferred)
 - Catalog CRUD (categories, services, sub-services, pincodes) — ✅
 - Employee area: My Jobs + job detail (accept/reject/start/work-done + photo
   upload) — 🟡 (coded, not committed; replaces old start/complete flow)
+- Employee Wallet page (`/employee/wallet`) — ✅ (frontend; backend
+  `GET /employee/jobs/wallet` + `/wallet/ledger` already existed). Summary cards
+  (balance, total earned, paid out, earned-this-month computed client-side from
+  ledger JOB_CREDITs) + full ledger table (typed badges, ₹ formatting).
+  "Wallet" nav item added to the employee sidebar in `DashboardLayout`.
+- Staff notification bell (topbar, all staff roles via `DashboardLayout`) — ✅
+  `NotificationBell` component: unread-count badge (polls `/me/notifications/
+  unread-count` every 60s), dropdown panel loading latest 30, optimistic
+  mark-read + mark-all-read. Customer bell deferred (see open-questions).
 
 ## Pricing & charges (this session)
 - Settings foundation: namespaced `AppSetting`, pricing group, admin GET/PATCH — 🟡
@@ -137,14 +151,36 @@ started · 🔵 Phase 2 (deferred)
 - Global payout default settings — 🟡 (coded, not committed).
   `GET/PATCH /admin/settings/payouts` + `staffApi` fetchers.
 - `wallet_ledger_and_payout_rate` Prisma migration — ⏳ not yet deployed.
-- Settlement screen + payout notification — ⏳ (payout recording done; a
-  dedicated settlement/batch screen + notifications still pending).
+- Settlement screen + payout notification — 🟡 payout notification LIVE
+  (PAYOUT_RECEIVED fires in-app + email from `recordPayout`); dedicated
+  settlement/batch screen still ⏳.
 - Refunds: order-level full refund/cancel done (see Payments section).
   Refunds queue UI + gateway partial refund — ⏳ / 🔵.
 
 
 ## Cross-cutting (Master Doc Phase 1)
-- Channel-agnostic notification engine (in-app + email live, WhatsApp-ready) — ⏳
+- Channel-agnostic notification engine (in-app + email live, WhatsApp-ready) — ✅
+  Hybrid dispatch: in-app row written synchronously (enlists in caller's `tx`
+  when passed), email best-effort/post-commit (failures swallowed in
+  `EmailChannel`, never roll back the caller). Optional CC/BCC ops address
+  (`notifications` settings group; Admin → Settings box) BCC'd on every outbound
+  email. `NotificationType` enum covers all 15 events across Customer / Employee /
+  Supervisor-Admin.
+  - **Events wired ✅:** TECHNICIAN_ASSIGNED + WORK_ASSIGNED (assign),
+    PAYMENT_RECEIVED (markOrderPaid), BOOKING_CANCELLED + PAYMENT_CANCELLED
+    (refund / cancel-unpaid), WORK_COMPLETED + JOB_COMPLETED (confirmCompletion),
+    EMPLOYEE_ACCEPTED / EMPLOYEE_REJECTED / WORK_DONE +
+    AWAITING_SUPERVISOR_CONFIRMATION (employee flow), PAYOUT_RECEIVED (recordPayout),
+    BOOKING_RECEIVED (checkout).
+  - Admin/supervisor fan-out (`notifyStaff`): one in-app row per active
+    ADMIN+SUPERVISOR; email attached to first recipient only (BCC'd to ops).
+    Currently DUPLICATED as a private helper in `OrdersService` + `EmployeeService`
+    — pending refactor to a single shared method on `NotificationsService`
+    (see open-questions).
+  - Frontend consumer — staff bell ✅ (in-app list, unread badge, mark-read/
+    all, 60s poll). Customer bell ⏳ (bundled with the customer-area work).
+    Notification→booking/order deep-linking ⏳ (data ids are carried but the
+    bell only marks-read, doesn't navigate yet).
 - GST invoice PDF generation — ⏳
 - Enforced status lifecycles (§8) — 🟡 booking lifecycle enforced end-to-end
   (accept→…→confirm). Order/payment lifecycle now guarded too: settlement

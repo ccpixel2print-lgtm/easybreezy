@@ -35,6 +35,41 @@
   `employee.payoutRatePercent ?? global defaultPayoutPercent`). Idempotent on
   `@@unique([bookingId, type])`. Reversal hook (`reverseForBooking`) available
   for refunds/cancellations.
+- **Customer account area** — scoped, not built. LOCKED constraint: NOT a
+  separate dashboard UI. Customer remains on the normal website with full public
+  nav/chrome; add only a dropdown under the customer name/email in the existing
+  header with three items — Profile, Bookings, Refund/Cancellations — each
+  rendering as a page inside the website's own layout. Sequenced after the
+  notification engine per the current plan.
+
+## Notifications (engine live; follow-ups deferred)
+- **`notifyStaff` deduplication** — DEFERRED (agreed). The admin/supervisor
+  fan-out helper is duplicated in `OrdersService` and `EmployeeService`. Lift it
+  to a single shared method on `NotificationsService`
+  (`notifyStaff(msg)` — fetches active ADMIN+SUPERVISOR, one in-app each, email
+  on first recipient only) and repoint both callers; delete the private copies.
+- **BOOKING_RECEIVED timing vs. payment state** — DEFERRED (agreed). Currently
+  fires in `checkout()` for every order, including online orders whose payment
+  may fail/abandon — so ops can see a "received" booking that never gets paid.
+  Planned fix: fire BOOKING_RECEIVED only when bookings actually enter operations
+  — from `confirmBookingsForOps` (COD, immediate) and from `markOrderPaid`
+  (online, on settle) — and remove it from `checkout()`. Assign-gating itself is
+  already enforced by the status machine (`assign()` allows only CONFIRMED
+  bookings; online bookings stay PENDING_PAYMENT until settled), so no separate
+  guard is strictly required — an explicit `paymentStatus` guard in `assign()`
+  is an optional belt-and-suspenders add.
+- **PAYMENT_REJECTED customer email** — DEFERRED (agreed). The FAILED branch in
+  `verifyAndSettle` currently marks payments FAILED silently. Add a customer
+  in-app + email notification there so the customer knows the payment failed and
+  can re-checkout.
+- **Notification deep-linking** — DEFERRED. Notifications carry `data`
+  (`bookingId` / `orderId`), but the staff bell only marks-read on click; it
+  does not navigate. Add per-type routing (role-aware target route) once the
+  bell is proven in use.
+- **Customer notification bell** — DEFERRED (with customer-area work). Mounts
+  into the EXISTING website header (not a separate shell), next to the customer
+  name/email dropdown. Same `/me/notifications` API as staff (route is
+  JwtGuard-only, so it already serves customers).
 
 ## Policy / compliance
 - **Named Grievance Officer** for the Privacy Policy (name + designation) — using
@@ -55,6 +90,11 @@
 - Done: pricing/payments block, Phase 0 bookings-card/sort, money model,
   `PATCH /auth/me` (profile edit, both roles), and the payment lifecycle
   (refund/cancel, guarded settlement, expiry method).
-- Current position: payment lifecycle complete → **next: notifications** →
-  invoices → employee/supervisor workflow (supervisor booking-detail/
-  photo-review) → hardening.
+- - Done: pricing/payments block, Phase 0 bookings-card/sort, money model,
+  `PATCH /auth/me`, the payment lifecycle (refund/cancel, guarded settlement,
+  expiry method), and the **notification engine backend** (all 15 events wired,
+  in-app + email, CC/BCC settings box).
+- Current position: notification engine backend complete → **next: notification
+  frontend consumer** (bell, list, unread badge, mark-read) → GST invoice PDF →
+  employee/supervisor workflow (supervisor booking-detail/photo-review) →
+  notification follow-ups above → hardening.

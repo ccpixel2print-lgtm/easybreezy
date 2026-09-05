@@ -56,6 +56,36 @@ operations queue, not a "most-recently-created" feed.
 **Rationale:** staff work the nearest-due job first; ascending scheduledDate is
 the correct priority order.
 
+### F. Notification engine design (locked)
+Hybrid delivery: **in-app is authoritative and synchronous** (written now,
+enlists in the caller's `$transaction` when one is passed, so the notification
+commits atomically with the business change); **email is best-effort and
+post-commit** (fire-and-forget, failures swallowed inside `EmailChannel` so a
+mail outage never rolls back or fails the business operation).
+- **Channel-agnostic** (`NotificationMessage` + channel interface) so WhatsApp
+  can be added later without touching callers — per Master Doc.
+- **CC/BCC ops address** is a single optional field in the `notifications`
+  settings group (Admin → Settings), BCC'd on every outbound customer/employee
+  email so ops get a passive copy without extra config per event.
+- **Admin/supervisor events fan out** to all active ADMIN+SUPERVISOR as one
+  in-app row each, but the **email is attached to only the first recipient**
+  (which BCCs the ops address) — avoids spamming every admin's inbox while still
+  giving ops one email + everyone the in-app badge.
+- **Build-one-event-first** was the agreed rollout: TECHNICIAN_ASSIGNED was wired
+  and smoke-tested end-to-end before the remaining 14 events were added.
+**Rationale:** notifications must never be able to break a checkout, payment,
+assignment, or payout; in-app is the reliable channel and email is a convenience
+layer.
+### G. Customer account area is in-site, not a separate dashboard (locked)
+Unlike staff (who use the `DashboardLayout` shell with a sidebar), the customer
+"account area" must feel like part of the normal website. Keep all existing
+public navigation and chrome; the only addition is a dropdown under the customer
+name/email in the existing site header, linking to three pages — Profile,
+Bookings, Refund/Cancellations — which render within the website's own layout.
+No sidebar, no distinct dashboard look.
+**Rationale:** the customer journey stays continuous with browsing/booking; a
+separate admin-style shell would feel jarring and off-brand for end customers.
+
 ## Technical decisions (this project)
 - **Money in paise** everywhere (backend); frontend converts at edges.
 - **JWT in localStorage**; separate `StaffAuthContext` (`eb_staff_token`) from
