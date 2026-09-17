@@ -358,3 +358,84 @@ export async function fetchPhonePeStatus(
     totalAmount: order?.totalAmount,
   };
 }
+
+// ---- Customer account (profile + orders/bookings) ----
+
+export interface UpdateMePayload {
+  fullName?: string;
+  phone?: string;
+}
+
+/** Update the logged-in customer's profile (name/phone). PATCH /auth/me. */
+export async function updateMe(
+  token: string,
+  payload: UpdateMePayload,
+): Promise<AuthUser> {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Could not update your profile.');
+  }
+  return res.json();
+}
+
+export interface CustomerBooking {
+  id: string;
+  bookingNumber: string;
+  status: string;
+  itemName?: string | null;
+  scheduledDate?: string | null;
+  scheduledTimeWindow?: string | null;
+  addressLine1?: string | null;
+  area?: string | null;
+  city?: string | null;
+  pincode?: string | null;
+}
+
+export interface CustomerOrder {
+  id: string;
+  orderNumber: string;
+  status: string;
+  paymentStatus: string;
+  subtotal?: number | null;      // paise
+  taxAmount?: number | null;     // paise
+  totalAmount: number;           // paise
+  placedAt?: string;
+  createdAt?: string;
+  bookings?: CustomerBooking[];
+}
+
+/** All orders for the logged-in customer (newest first), each with its bookings. */
+export async function listMyOrders(token: string): Promise<CustomerOrder[]> {
+  const res = await fetch(`${API_URL}/me/orders`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Could not load your orders.');
+  return res.json();
+}
+
+/** Cancel an unpaid order. POST /me/orders/:id/cancel. */
+export async function cancelMyOrder(
+  token: string,
+  orderId: string,
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${API_URL}/me/orders/${orderId}/cancel`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Could not cancel this order.');
+  }
+  return res.json();
+}

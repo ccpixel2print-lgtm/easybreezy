@@ -35,12 +35,13 @@
   `employee.payoutRatePercent ?? global defaultPayoutPercent`). Idempotent on
   `@@unique([bookingId, type])`. Reversal hook (`reverseForBooking`) available
   for refunds/cancellations.
-- **Customer account area** — scoped, not built. LOCKED constraint: NOT a
-  separate dashboard UI. Customer remains on the normal website with full public
-  nav/chrome; add only a dropdown under the customer name/email in the existing
-  header with three items — Profile, Bookings, Refund/Cancellations — each
-  rendering as a page inside the website's own layout. Sequenced after the
-  notification engine per the current plan.
+- ~~**Customer account area**~~ — DONE (in-site, not a dashboard shell): user
+  menu + `/account/profile`, `/account/bookings`, `/account/refunds`. Follow-up
+  OPEN: customer-initiated refund REQUEST for PAID orders. Today the refunds page
+  only self-cancels UNPAID orders (backend `cancelUnpaidOrder`); paid refunds are
+  admin-only (`refundOrder`). If we want customers to request a paid refund,
+  add a request endpoint + admin queue (deferred).
+
 
 ## Notifications (engine live; follow-ups deferred)
 - **`notifyStaff` deduplication** — DEFERRED (agreed). The admin/supervisor
@@ -66,10 +67,10 @@
   (`bookingId` / `orderId`), but the staff bell only marks-read on click; it
   does not navigate. Add per-type routing (role-aware target route) once the
   bell is proven in use.
-- **Customer notification bell** — DEFERRED (with customer-area work). Mounts
-  into the EXISTING website header (not a separate shell), next to the customer
-  name/email dropdown. Same `/me/notifications` API as staff (route is
-  JwtGuard-only, so it already serves customers).
+- **Customer notification bell** — DEFERRED. The mount point now exists (the
+  customer user menu in `Navbar`); the bell would sit next to it in the existing
+  website header. Reuse the same `/me/notifications` API as staff (JwtGuard-only,
+  already serves customers) and the same `NotificationBell` UX pattern.
 
 ## Policy / compliance
 - **Named Grievance Officer** for the Privacy Policy (name + designation) — using
@@ -88,13 +89,17 @@
 
 ## Sequencing
 - Done: pricing/payments block, Phase 0 bookings-card/sort, money model,
-  `PATCH /auth/me` (profile edit, both roles), and the payment lifecycle
-  (refund/cancel, guarded settlement, expiry method).
-- - Done: pricing/payments block, Phase 0 bookings-card/sort, money model,
-  `PATCH /auth/me`, the payment lifecycle (refund/cancel, guarded settlement,
-  expiry method), and the **notification engine backend** (all 15 events wired,
-  in-app + email, CC/BCC settings box).
-- Current position: notification engine backend complete → **next: notification
-  frontend consumer** (bell, list, unread badge, mark-read) → GST invoice PDF →
-  employee/supervisor workflow (supervisor booking-detail/photo-review) →
-  notification follow-ups above → hardening.
+  `PATCH /auth/me` (profile edit, both roles), the payment lifecycle
+  (refund/cancel, guarded settlement, expiry method), the notification engine
+  (backend: all 15 events, in-app + email, CC/BCC settings box; frontend: staff
+  bell), the employee Wallet page, and the customer account area (user menu +
+  profile / bookings / refunds, in-site).
+- Prod-focus reprioritisation (owner call): customer self-service + field
+  invoice are the go-live drivers.
+  - Next: **technician invoice/quote after diagnosis** (item + description +
+    amount). Scope pending one decision — does it COLLECT additional payment
+    (visiting/quote flow: `AWAITING_QUOTE` + `quote_balance`, customer approve +
+    pay balance) or is it RECORD-ONLY (line items feeding the final/GST invoice,
+    no new money movement)? This gates whether it's a large or small build.
+  - Then: GST invoice PDF, customer notification bell, supervisor
+    booking-detail/photo-review, notification follow-ups, hardening.

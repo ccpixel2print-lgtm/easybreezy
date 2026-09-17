@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Logo from './Logo';
@@ -19,6 +19,20 @@ export default function Navbar() {
   const { user, logout } = useAuth();
 
   const pathname = usePathname();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [menuOpen]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -87,17 +101,41 @@ export default function Navbar() {
             </svg>
           </Link>
           {user ? (
-            <div className="ml-1 flex items-center gap-2">
-              <span className="hidden text-sm font-medium text-ink lg:inline">
-                {user.fullName || user.email}
-              </span>
+            <div ref={menuRef} className="relative ml-1">
               <button
                 type="button"
-                onClick={logout}
+                onClick={() => setMenuOpen((o) => !o)}
                 className="inline-flex items-center gap-2 rounded-full border border-brand px-5 py-2.5 text-sm font-semibold text-brand transition-all hover:bg-brand-tint active:scale-95"
               >
-                Logout
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
+                </svg>
+                <span className="max-w-[10rem] truncate">{user.fullName || user.email}</span>
+                <svg className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
               </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-soft">
+                  <div className="border-b border-gray-100 px-4 py-3">
+                    <p className="truncate text-sm font-semibold text-ink">{user.fullName || 'My account'}</p>
+                    <p className="truncate text-xs text-ink/50">{user.email}</p>
+                  </div>
+                  <Link href="/account/profile" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-brand-tint hover:text-brand">
+                    Profile
+                  </Link>
+                  <Link href="/account/bookings" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-brand-tint hover:text-brand">
+                    My Bookings
+                  </Link>
+                  <Link href="/account/refunds" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-brand-tint hover:text-brand">
+                    Refunds &amp; Cancellations
+                  </Link>
+                  <button type="button" onClick={() => { logout(); setMenuOpen(false); }} className="block w-full border-t border-gray-100 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50">
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <Link
@@ -191,13 +229,24 @@ export default function Navbar() {
             Cart
           </Link>
           {user ? (
-            <button
-              type="button"
-              onClick={() => { logout(); setOpen(false); }}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-brand px-6 py-3 text-base font-semibold text-brand transition-colors hover:bg-brand-tint"
-            >
-              Logout ({user.email})
-            </button>
+            <>
+              <Link href="/account/profile" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-base font-medium text-ink transition-colors hover:bg-brand-tint hover:text-brand">
+                Profile
+              </Link>
+              <Link href="/account/bookings" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-base font-medium text-ink transition-colors hover:bg-brand-tint hover:text-brand">
+                My Bookings
+              </Link>
+              <Link href="/account/refunds" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-base font-medium text-ink transition-colors hover:bg-brand-tint hover:text-brand">
+                Refunds &amp; Cancellations
+              </Link>
+              <button
+                type="button"
+                onClick={() => { logout(); setOpen(false); }}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-brand px-6 py-3 text-base font-semibold text-brand transition-colors hover:bg-brand-tint"
+              >
+                Logout
+              </button>
+            </>
           ) : (
             <Link
               href="/login"

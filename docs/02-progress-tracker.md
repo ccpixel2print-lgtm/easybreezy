@@ -31,12 +31,21 @@ started · 🔵 Phase 2 (deferred)
 - Pincode serviceability at add-to-cart + out-of-area lead capture — ✅
 - Customer email-OTP auth — ✅
 - Checkout creating Order + Bookings — ✅
-- Customer account: booking status + history — 🟡 partial. Full customer area
-  (Profile / Bookings / Refund-Cancellations) scoped but NOT built. Constraint
-  (locked): it is NOT a separate dashboard shell — the customer stays on the
-  normal website with the existing public nav/chrome intact; the only addition
-  is a dropdown under the customer name/email in the existing header linking to
-  the three pages, which render inside the website's own layout.
+- Customer account area (in-site, not a dashboard shell) — ✅. User menu dropdown
+  under the customer name/email in the existing `Navbar` (desktop + mobile),
+  linking to three pages that render inside the normal website layout:
+  - `/account/profile` — edit name/phone via `PATCH /auth/me` (email read-only);
+    refreshes `AuthContext` on save.
+  - `/account/bookings` — order history + live status; lists `GET /me/orders`
+    with nested bookings, colour-coded status pills (order paymentStatus +
+    per-booking status).
+  - `/account/refunds` — self-cancel of UNPAID orders via
+    `POST /me/orders/:id/cancel`; paid-order refunds routed to policy/support
+    (no customer self-serve paid refund, matching backend).
+  New client helpers in `src/lib/api.ts`: `updateMe`, `listMyOrders`,
+  `cancelMyOrder` (+ `CustomerOrder` / `CustomerBooking` types). All three pages
+  guard auth (redirect to `/login` when no token). Customer notification bell
+  still ⏳ (mounts into this same header later).
 - GST invoice PDF download — ⏳
 - Visiting-flow quote review/approve + balance payment — 🔵/⏳
 - Completion confirmation (supervisor-confirmed; customer-facing view later) — 🟡
@@ -49,7 +58,7 @@ started · 🔵 Phase 2 (deferred)
 - Staff management CRUD — ✅
 - Catalog CRUD (categories, services, sub-services, pincodes) — ✅
 - Employee area: My Jobs + job detail (accept/reject/start/work-done + photo
-  upload) — 🟡 (coded, not committed; replaces old start/complete flow)
+  upload) — ✅ (replaces old start/complete flow)
 - Employee Wallet page (`/employee/wallet`) — ✅ (frontend; backend
   `GET /employee/jobs/wallet` + `/wallet/ledger` already existed). Summary cards
   (balance, total earned, paid out, earned-this-month computed client-side from
@@ -107,17 +116,17 @@ started · 🔵 Phase 2 (deferred)
 
 ## Employee/Supervisor operational workflow (Master Doc Phase 1)
 - Completion spine (accept/reject → start → work-done → supervisor confirm) —
-  🟡 (coded, not committed). Lifecycle now:
+  ✅ Lifecycle now:
   `CONFIRMED → ASSIGNED → ACCEPTED → IN_PROGRESS → AWAITING_CONFIRMATION →
   COMPLETED`; reject returns booking to CONFIRMED queue (clears workflow
     timestamps on reassign). Wallet-credit hook is now LIVE inside
   `confirmCompletion` — credit + status flip run in one transaction.
 - Before/after photo upload (R2/S3-compatible storage; optional-with-nudge) —
-  🟡 (coded, not committed). `BookingPhoto` model + `/employee/jobs/:id/photos`
+  ✅ `BookingPhoto` model + `/employee/jobs/:id/photos`
   upload endpoint; StorageService lazily builds the R2 client and errors clearly
   if R2 env is absent, so the flow is testable pre-R2.
 - Supervisor confirm from bookings list (`POST /admin/bookings/:id/confirm`) —
-  🟡 (coded, not committed).
+  ✅
 - **Supervisor booking-detail view (photo review before confirm)** — ⏳ DEFERRED.
   The list endpoint stays light (no photos); only `getBooking` returns photos.
   Build a detail drawer/page so supervisors can review before/after photos before
@@ -130,17 +139,17 @@ started · 🔵 Phase 2 (deferred)
 - Quote raising (employee or supervisor; incl. supervisor-added extra charges) — ⏳
 
 ## Money model depth (Master Doc Phase 1)
-- Per-employee revenue split — 🟡 (coded, not committed). Payout base =
+- Per-employee revenue split — ✅. Payout base =
   `Booking.serviceAmount` (pre-tax service charge). Rate resolution:
   per-employee `User.payoutRatePercent` if set, else global
   `payouts.defaultPayoutPercent` (settings group, default 70%). Whole-number
   percent, paise math (`round(serviceAmount × pct/100)`).
-- Append-only wallet ledger (`WalletLedger`) — 🟡 (coded, not committed).
+- Append-only wallet ledger (`WalletLedger`) — ✅.
   Entry types: JOB_CREDIT (+), PAYOUT (−), REVERSAL (−), ADJUSTMENT (±).
   Balance = SUM(amount). Credit written in the SAME transaction as the
   `AWAITING_CONFIRMATION → COMPLETED` flip; idempotent via
   `@@unique([bookingId, type])` so double-confirm can't double-credit.
-- Payout recording (debit) — 🟡 (coded, not committed). Admin/supervisor
+- Payout recording (debit) — ✅. Admin/supervisor
   `POST /admin/bookings/employees/:employeeId/wallet/payout`; validates amount
   ≤ balance; stored negative. Employee wallet screen + admin wallet panel
   (balance, totals, ledger, record-payout, set-rate) built.
@@ -148,7 +157,7 @@ started · 🔵 Phase 2 (deferred)
   `reverseForBooking` now accepts an optional `tx` (enlists in the refund
   transaction) and is called by the admin refund flow, reversing each booking's
   exact `JOB_CREDIT`. Idempotent per booking (`@@unique([bookingId, type])`).
-- Global payout default settings — 🟡 (coded, not committed).
+- Global payout default settings — ✅.
   `GET/PATCH /admin/settings/payouts` + `staffApi` fetchers.
 - `wallet_ledger_and_payout_rate` Prisma migration — ⏳ not yet deployed.
 - Settlement screen + payout notification — 🟡 payout notification LIVE

@@ -85,6 +85,8 @@ Bookings, Refund/Cancellations — which render within the website's own layout.
 No sidebar, no distinct dashboard look.
 **Rationale:** the customer journey stays continuous with browsing/booking; a
 separate admin-style shell would feel jarring and off-brand for end customers.
+**Status:** implemented — user menu in `Navbar` + `/account/profile`,
+`/account/bookings`, `/account/refunds`, all rendering in the website layout.
 
 ## Technical decisions (this project)
 - **Money in paise** everywhere (backend); frontend converts at edges.
