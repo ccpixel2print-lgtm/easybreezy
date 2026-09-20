@@ -212,6 +212,7 @@ export interface EmployeeJob {
   confirmedAt?: string | null;
   notes?: string | null;
   photos?: BookingPhoto[];
+  quotes?: StaffQuote[];
   // loose until confirmed against the live payload
   [key: string]: unknown;
 }
@@ -222,7 +223,6 @@ export interface BookingPhoto {
   url: string;
   createdAt?: string;
 }
-
 
 export function fetchEmployeeJobs(token: string, status?: string) {
   const qs = status ? `?status=${encodeURIComponent(status)}` : '';
@@ -255,6 +255,79 @@ export function workDoneEmployeeJob(token: string, id: string, notes?: string) {
   });
 }
 
+// ---- Extra-work quotes (Step: quote feature) ----
+
+export interface StaffQuoteItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  amount: number;    // paise, unit price
+  quantity: number;
+  lineTotal: number; // paise
+}
+
+export interface StaffQuote {
+  id: string;
+  quoteNumber: string;
+  status: 'AWAITING_PAYMENT' | 'PAID' | 'CANCELLED' | 'DRAFT';
+  subtotal: number;
+  gstRate: number;   // basis points
+  taxAmount: number;
+  totalAmount: number;
+  items: StaffQuoteItem[];
+  createdAt: string;
+}
+
+export interface RaiseQuoteItemInput {
+  name: string;
+  description?: string;
+  amount: number;    // paise
+  quantity?: number;
+}
+
+// Employee raises a quote on their own job.
+export function raiseEmployeeQuote(
+  token: string,
+  bookingId: string,
+  items: RaiseQuoteItemInput[],
+) {
+  return staffFetch<StaffQuote>(`/employee/jobs/${bookingId}/quotes`, token, {
+    method: 'POST',
+    body: JSON.stringify({ items }),
+  });
+}
+
+export function cancelEmployeeQuote(token: string, quoteId: string) {
+  return staffFetch<StaffQuote>(
+    `/employee/jobs/quotes/${quoteId}/cancel`,
+    token,
+    { method: 'POST' },
+  );
+}
+
+// Supervisor/admin raises a quote on behalf of the technician.
+// NOTE: controller prefix is 'admin/bookings' and the route is 'bookings/:id/quotes',
+// so the path is intentionally doubled to match the committed backend.
+export function raiseAdminQuote(
+  token: string,
+  bookingId: string,
+  items: RaiseQuoteItemInput[],
+) {
+  return staffFetch<StaffQuote>(
+    `/admin/bookings/bookings/${bookingId}/quotes`,
+    token,
+    { method: 'POST', body: JSON.stringify({ items }) },
+  );
+}
+
+export function cancelAdminQuote(token: string, quoteId: string) {
+  return staffFetch<StaffQuote>(
+    `/admin/bookings/quotes/${quoteId}/cancel`,
+    token,
+    { method: 'POST' },
+  );
+}
+
 /** Photo upload uses multipart/form-data, so it bypasses the JSON staffFetch helper. */
 export async function uploadJobPhoto(
   token: string,
@@ -274,6 +347,7 @@ export async function uploadJobPhoto(
   if (!res.ok) return parseError(res, `Upload failed (${res.status}).`);
   return res.json() as Promise<BookingPhoto>;
 }
+
 
 export interface AdminBooking {
   id: string;

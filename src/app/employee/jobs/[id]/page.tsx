@@ -10,11 +10,22 @@ import {
   startEmployeeJob,
   workDoneEmployeeJob,
   uploadJobPhoto,
+  raiseEmployeeQuote,
+  cancelEmployeeQuote,
   StaffAuthError,
   type EmployeeJob,
   type BookingPhoto,
+  type RaiseQuoteItemInput,
 } from '@/lib/staffApi';
+import RaiseQuoteModal from '@/components/staff/RaiseQuoteModal';
 import StatusBadge from '@/components/staff/StatusBadge';
+
+function inr(paise?: number | null): string {
+  return `₹${((paise ?? 0) / 100).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 export default function EmployeeJobDetailPage() {
   const params = useParams<{ id: string }>();
@@ -30,6 +41,7 @@ export default function EmployeeJobDetailPage() {
   const [rejecting, setRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [uploading, setUploading] = useState<'BEFORE' | 'AFTER' | null>(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
 
   const beforeInput = useRef<HTMLInputElement>(null);
   const afterInput = useRef<HTMLInputElement>(null);
@@ -54,14 +66,13 @@ export default function EmployeeJobDetailPage() {
     load();
   }, [load]);
 
-  async function runAction(fn: () => Promise<EmployeeJob>) {
+  async function runAction(fn: () => Promise<unknown>) {
     if (!token || !id) return;
     setActing(true);
     setError(null);
     try {
-      const updated = await fn();
-      // action responses are partial; re-load to get full job + photos
-      setJob((prev) => (prev ? { ...prev, ...updated } : updated));
+      await fn();
+      // action/quote responses vary in shape; re-load to get the full job + photos
       await load();
     } catch (err) {
       if (err instanceof StaffAuthError) return logout();
@@ -115,6 +126,8 @@ export default function EmployeeJobDetailPage() {
     [job.addressLine1, job.addressLine2, job.area, job.city, job.pincode]
       .filter(Boolean)
       .join(', ');
+  const quotes = job.quotes ?? [];
+  const openQuote = quotes.find((q) => q.status === 'AWAITING_PAYMENT');
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -277,13 +290,86 @@ export default function EmployeeJobDetailPage() {
                 placeholder="e.g. Work done, customer satisfied."
                 className="w-full resize-none rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
+              {/* Extra-work quotes */}
+              <div className="rounded-lg border border-black/5 bg-gray-50 p-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-ink">Extra-work quotes</h3>
+                  {!openQuote && (
+                    <button
+                      type="button"
+                      onClick={() => setShowQuoteModal(true)}
+                      disabled={acting}
+                      className="rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+                    >
+                      Raise quote
+                    </button>
+                  )}
+                </div>
+
+                {quotes.length === 0 ? (
+                  <p className="mt-2 text-xs text-ink/50">
+                    No extra-work quotes. Raise one if the job needs additional paid work.
+                  </p>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    {quotes.map((q) => (
+                      <div
+                        key={q.id}
+                        className={`rounded-lg p-2.5 ring-1 ${
+                          q.status === 'PAID'
+                            ? 'bg-green-50 ring-green-200'
+                            : 'bg-amber-50 ring-amber-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-ink">{q.quoteNumber}</span>
+                          <span className="text-xs font-medium text-ink/60">
+                            {q.status === 'AWAITING_PAYMENT' ? 'Awaiting payment' : q.status}
+                          </span>
+                        </div>
+                        <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
+                          {q.items.map((it) => (
+                            <li key={it.id} className="flex justify-between gap-3">
+                              <span>
+                                {it.name}
+                                {it.quantity > 1 ? ` × ${it.quantity}` : ''}
+                              </span>
+                              <span className="font-medium text-ink">{inr(it.lineTotal)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-1.5 flex justify-between border-t border-black/5 pt-1.5 text-xs font-bold text-ink">
+                          <span>Total{q.taxAmount > 0 ? ' (incl. GST)' : ''}</span>
+                          <span>{inr(q.totalAmount)}</span>
+                        </div>
+                        {q.status === 'AWAITING_PAYMENT' && (
+                          <button
+                            type="button"
+                            disabled={acting}
+                            onClick={() => runAction(() => cancelEmployeeQuote(token!, q.id))}
+                            className="mt-1.5 text-xs font-semibold text-red-600 hover:underline disabled:opacity-60"
+                          >
+                            Cancel quote
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
               <button
                 onClick={() => runAction(() => workDoneEmployeeJob(token!, id!, notes.trim() || undefined))}
-                disabled={acting}
+                disabled={acting || !!openQuote}
                 className="w-full rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700 active:scale-95 disabled:opacity-60"
               >
                 {acting ? 'Submitting…' : 'Mark Work Done'}
               </button>
+              {openQuote && (
+                <p className="mt-2 text-xs text-amber-700">
+                  Extra-work quote {openQuote.quoteNumber} is awaiting customer payment — you can mark work done once it&apos;s paid.
+                </p>
+              )}
             </div>
           )}
 
@@ -301,6 +387,17 @@ export default function EmployeeJobDetailPage() {
           )}
         </div>
       </div>
+      {showQuoteModal && (
+        <RaiseQuoteModal
+          gstRate={0}
+          onClose={() => setShowQuoteModal(false)}
+          submit={(items: RaiseQuoteItemInput[]) => raiseEmployeeQuote(token!, id!, items)}
+          onSuccess={async () => {
+            setShowQuoteModal(false);
+            await load();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { listMyOrders, type CustomerOrder } from '@/lib/api';
+import { listMyOrders, payQuote, type CustomerOrder } from '@/lib/api';
 
 function inr(paise?: number | null): string {
   return `₹${((paise ?? 0) / 100).toLocaleString('en-IN', {
@@ -37,6 +37,31 @@ export default function AccountBookingsPage() {
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  const handlePayQuote = useCallback(
+    async (quoteId: string) => {
+      if (!token) return;
+      setPayingId(quoteId);
+      setPayError(null);
+      try {
+        const res = await payQuote(token, quoteId);
+        if (res.redirectUrl) {
+          window.location.href = res.redirectUrl; // full-page redirect to PhonePe
+        } else {
+          setPayError('Payment could not be started. Please try again.');
+          setPayingId(null);
+        }
+      } catch (err) {
+        setPayError(
+          err instanceof Error ? err.message : 'Could not start payment.',
+        );
+        setPayingId(null);
+      }
+    },
+    [token],
+  );
 
   useEffect(() => {
     if (!authLoading && !token) router.replace('/login');
@@ -63,6 +88,12 @@ export default function AccountBookingsPage() {
     <main className="mx-auto max-w-3xl px-4 pb-16 pt-28 sm:px-6">
       <h1 className="text-2xl font-bold text-ink">My Bookings</h1>
       <p className="mt-1 text-sm text-ink/60">Your orders and their current status.</p>
+
+      {payError && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
+          {payError}
+        </div>
+      )}
 
       {loading || authLoading ? (
         <div className="flex justify-center py-16">
@@ -99,18 +130,102 @@ export default function AccountBookingsPage() {
               {o.bookings && o.bookings.length > 0 && (
                 <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
                   {o.bookings.map((b) => (
-                    <div key={b.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                      <div>
-                        <p className="font-medium text-ink">{b.itemName || 'Service'}</p>
-                        <p className="text-xs text-ink/50">
-                          {b.scheduledDate ? fmtDate(b.scheduledDate) : ''}
-                          {b.scheduledTimeWindow ? ` · ${b.scheduledTimeWindow}` : ''}
-                          {b.pincode ? ` · ${b.pincode}` : ''}
-                        </p>
+                    <div key={b.id} className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <div>
+                          <p className="font-medium text-ink">{b.itemName || 'Service'}</p>
+                          <p className="text-xs text-ink/50">
+                            {b.scheduledDate ? fmtDate(b.scheduledDate) : ''}
+                            {b.scheduledTimeWindow ? ` · ${b.scheduledTimeWindow}` : ''}
+                            {b.pincode ? ` · ${b.pincode}` : ''}
+                          </p>
+                        </div>
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${statusStyle(b.status)}`}>
+                          {b.status.replace(/_/g, ' ')}
+                        </span>
                       </div>
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${statusStyle(b.status)}`}>
-                        {b.status.replace(/_/g, ' ')}
-                      </span>
+
+                      {/* Extra-work quotes for this booking */}
+                      {b.quotes && b.quotes.length > 0 && (
+                        <div className="space-y-2">
+                          {b.quotes.map((q) => (
+                            <div
+                              key={q.id}
+                              className={`rounded-xl p-3 ring-1 ${
+                                q.status === 'PAID'
+                                  ? 'bg-green-50/50 ring-green-200'
+                                  : 'bg-amber-50/60 ring-amber-200'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-semibold text-ink">
+                                  Extra work · {q.quoteNumber}
+                                </p>
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${statusStyle(
+                                    q.status,
+                                  )}`}
+                                >
+                                  {q.status === 'AWAITING_PAYMENT'
+                                    ? 'Payment due'
+                                    : q.status.replace(/_/g, ' ')}
+                                </span>
+                              </div>
+
+                              <ul className="mt-2 space-y-1">
+                                {q.items.map((it) => (
+                                  <li
+                                    key={it.id}
+                                    className="flex items-start justify-between gap-3 text-xs text-ink/70"
+                                  >
+                                    <span>
+                                      {it.name}
+                                      {it.quantity > 1 ? ` × ${it.quantity}` : ''}
+                                      {it.description ? (
+                                        <span className="block text-ink/45">
+                                          {it.description}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                    <span className="whitespace-nowrap font-medium text-ink">
+                                      {inr(it.lineTotal)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+
+                              <div className="mt-2 space-y-0.5 border-t border-black/5 pt-2 text-xs">
+                                <div className="flex justify-between text-ink/60">
+                                  <span>Subtotal</span>
+                                  <span>{inr(q.subtotal)}</span>
+                                </div>
+                                {q.taxAmount > 0 && (
+                                  <div className="flex justify-between text-ink/60">
+                                    <span>GST ({(q.gstRate / 100).toFixed(0)}%)</span>
+                                    <span>{inr(q.taxAmount)}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between font-semibold text-ink">
+                                  <span>Total</span>
+                                  <span>{inr(q.totalAmount)}</span>
+                                </div>
+                              </div>
+
+                              {q.status === 'AWAITING_PAYMENT' && (
+                                <button
+                                  onClick={() => handlePayQuote(q.id)}
+                                  disabled={payingId === q.id}
+                                  className="mt-3 w-full rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+                                >
+                                  {payingId === q.id
+                                    ? 'Redirecting…'
+                                    : `Pay ${inr(q.totalAmount)}`}
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

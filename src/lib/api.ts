@@ -398,6 +398,7 @@ export interface CustomerBooking {
   area?: string | null;
   city?: string | null;
   pincode?: string | null;
+  quotes?: CustomerQuote[];
 }
 
 export interface CustomerOrder {
@@ -420,6 +421,53 @@ export async function listMyOrders(token: string): Promise<CustomerOrder[]> {
     cache: 'no-store',
   });
   if (!res.ok) throw new Error('Could not load your orders.');
+  return res.json();
+}
+
+export interface CustomerQuoteItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  amount: number;   // paise, unit price
+  quantity: number;
+  lineTotal: number; // paise
+}
+
+export interface CustomerQuote {
+  id: string;
+  quoteNumber: string;
+  status: 'AWAITING_PAYMENT' | 'PAID' | 'CANCELLED' | 'DRAFT';
+  subtotal: number;
+  gstRate: number;   // basis points, e.g. 1800 = 18%
+  taxAmount: number;
+  totalAmount: number;
+  items: CustomerQuoteItem[];
+  createdAt: string;
+  paidAt?: string | null;
+}
+
+export interface QuotePayResult {
+  provider: string;
+  redirectUrl?: string | null;
+  merchantOrderId?: string | null;
+  paymentId: string;
+  quoteId: string;
+  amount: number;
+}
+
+export async function payQuote(
+  token: string,
+  quoteId: string,
+): Promise<QuotePayResult> {
+  const res = await fetch(`${API_URL}/me/quotes/${quoteId}/pay`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Could not start payment for this quote.');
+  }
   return res.json();
 }
 
