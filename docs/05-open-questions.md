@@ -1,5 +1,23 @@
 # Open Questions / Pending Decisions
 
+## Auth — SMS/WhatsApp OTP for customers (new phase, not started)
+Customer login today is **email OTP** (live). We want a **phone-based OTP** login,
+customer-only to start (technician/staff later). No code yet.
+- ~~Channel — SMS vs WhatsApp~~ — RESOLVED (decisions §I): WhatsApp first
+  (alongside existing email OTP), SMS deferred as a later fallback.
+- **Provider — OPEN:** MSG91 vs Twilio (vs Meta WhatsApp Cloud API if WhatsApp).
+  Lean: MSG91 for India-native SMS + built-in OTP/DLT template management.
+- **DLT registration — NOT STARTED, blocking for SMS.** India TRAI/DLT
+  registration of entity + header/sender ID + message template is mandatory
+  before transactional OTP SMS delivers; lead time days–weeks. WhatsApp OTP does
+  NOT need DLT (it needs Meta template approval instead — see channel note).
+- **Design intent:** provider-abstracted (mirror the PG-agnostic payments
+  pattern — an `OtpProvider` interface, provider chosen via settings), reuse the
+  existing customer email-OTP challenge/verify + JWT issuance pattern, add an OTP
+  challenge store (hashed code, expiry, attempt counter, per-phone rate limit).
+- **Phasing:** customer-only now; staff phone-OTP and completion-OTP (already
+  Phase 2 per decisions log) remain later.
+
 ## Payments
 - ~~`POST /payments/verify` callback route~~ — RESOLVED (decisions §D): PhonePe
   uses webhook + `verifyAndSettle`; no generic verify route needed.
@@ -96,10 +114,10 @@
   profile / bookings / refunds, in-site).
 - Prod-focus reprioritisation (owner call): customer self-service + field
   invoice are the go-live drivers.
-  - Next: **technician invoice/quote after diagnosis** (item + description +
-    amount). Scope pending one decision — does it COLLECT additional payment
-    (visiting/quote flow: `AWAITING_QUOTE` + `quote_balance`, customer approve +
-    pay balance) or is it RECORD-ONLY (line items feeding the final/GST invoice,
-    no new money movement)? This gates whether it's a large or small build.
+  - ~~technician invoice/quote after diagnosis~~ — RESOLVED (decisions §H):
+    collect-payment (Option B), quote-to-order via `parentOrderId`. Backend
+    committed; frontend 🟡 local. Remaining: supervisor quote UI, technician
+    job-detail quote section, customer quote card/pay, `AWAITING_QUOTE` filters,
+    PhonePe quote return page, quote notification events into the bell.
   - Then: GST invoice PDF, customer notification bell, supervisor
     booking-detail/photo-review, notification follow-ups, hardening.

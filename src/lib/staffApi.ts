@@ -198,8 +198,20 @@ export interface EmployeeJob {
   subServiceName?: string | null;
   scheduledDate?: string | null;
   scheduledTimeWindow?: string | null;
-  address?: string | null;
+    address?: string | null;
+  // full service-location snapshot (from Booking model)
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  area?: string | null;
+  city?: string | null;
   pincode?: string | null;
+  customer?: {
+    id: string;
+    fullName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
+  // legacy flat fields (kept optional)
   customerName?: string | null;
   customerPhone?: string | null;
   assignedAt?: string | null;

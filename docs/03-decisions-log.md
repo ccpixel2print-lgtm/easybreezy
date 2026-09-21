@@ -76,6 +76,7 @@ mail outage never rolls back or fails the business operation).
 **Rationale:** notifications must never be able to break a checkout, payment,
 assignment, or payout; in-app is the reliable channel and email is a convenience
 layer.
+
 ### G. Customer account area is in-site, not a separate dashboard (locked)
 Unlike staff (who use the `DashboardLayout` shell with a sidebar), the customer
 "account area" must feel like part of the normal website. Keep all existing
@@ -87,6 +88,50 @@ No sidebar, no distinct dashboard look.
 separate admin-style shell would feel jarring and off-brand for end customers.
 **Status:** implemented — user menu in `Navbar` + `/account/profile`,
 `/account/bookings`, `/account/refunds`, all rendering in the website layout.
+
+### H. Extra-work quotes: collect payment, quote-to-order (locked)
+The technician "invoice after diagnosis" is the **collect-payment** flow (Option
+B), not record-only. A quote is its own entity (`BookingQuote` + `QuoteItem`);
+on customer payment it is marked PAID and stamped with `parentOrderId` linking
+back to the origin Order (quote-to-order conversion, market standard), so a paid
+quote can later be consolidated onto the origin order's GST invoice while the
+quote record is preserved for audit.
+- **Who raises:** technician on their own job, OR supervisor/admin on the
+  technician's behalf (`raisedByType` EMPLOYEE | SUPERVISOR; exact user id kept).
+- **When:** only while the booking is `IN_PROGRESS` (v1). Booking → `AWAITING_QUOTE`
+  while awaiting payment; `markWorkDone` is blocked while an open quote exists.
+- **Payment:** online only (PhonePe) in v1; reuses the existing
+  initiate→redirect→webhook→verify chain via an opaque merchant id. COD deferred.
+- **GST:** if `gstEnabled` in the `pricing` settings group, GST is applied to the
+  quote subtotal; the rate is snapshotted onto the quote in **basis points**.
+- **One open quote per booking** in v1, enforced at the service layer (not a DB
+  constraint) so multi-quote can be added in v2 without migration. Edit = cancel
+  the open quote and re-issue a fresh one (never mutate a live quote+payment).
+**Rationale:** matches the visiting-type pricing model in the master doc and the
+field reality that extra work is discovered on site; quote-to-order keeps GST
+compliance (timestamped, approved, invoice links back) clean.
+**Known v1 edges (accepted):** `nextQuoteNumber()` uses a global count (small
+concurrency-collision risk); `editQuote` flips booking status across two
+transactions (brief `IN_PROGRESS` flicker). Both acceptable at current volume.
+
+### I. Customer OTP channels: email (live) + WhatsApp (next), SMS later (locked)
+Customer login stays passwordless OTP. Email OTP (Resend) remains unchanged and
+is the always-available baseline. We add **WhatsApp OTP** as a second channel
+next; **SMS OTP** is deferred as a later fallback behind the same abstraction.
+- **Why WhatsApp before SMS:** SMS OTP to Indian numbers requires TRAI/DLT
+  registration (entity + header + template), which is not started and has
+  days–weeks lead time. WhatsApp OTP needs a Meta-approved authentication
+  template instead (hours–a day) and no DLT, so it unblocks phone-OTP sooner.
+- **Design (mirrors PG-agnostic payments):** an `OtpChannel`/`OtpProvider`
+  interface; the active channel(s) chosen via a settings group; the
+  challenge/verify + JWT issuance logic is channel-independent and reuses the
+  existing customer email-OTP pattern. Adding SMS later = implement the interface
+  + enable in settings, no rework of callers.
+- **Scope now:** customer-only. Staff phone-OTP and completion-OTP remain Phase 2
+  (per decisions §… / master doc).
+**Rationale:** removes the DLT blocker from the critical path while keeping SMS a
+zero-rework addition; keeps email as a guaranteed fallback for users without
+WhatsApp.
 
 ## Technical decisions (this project)
 - **Money in paise** everywhere (backend); frontend converts at edges.

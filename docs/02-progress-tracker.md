@@ -47,7 +47,35 @@ started · 🔵 Phase 2 (deferred)
   guard auth (redirect to `/login` when no token). Customer notification bell
   still ⏳ (mounts into this same header later).
 - GST invoice PDF download — ⏳
-- Visiting-flow quote review/approve + balance payment — 🔵/⏳
+- Visiting-flow / extra-work quote (raise + approve + balance payment) — ✅
+  backend + frontend committed. Technician OR supervisor raises an extra-work
+  quote while a job is `IN_PROGRESS`; booking → `AWAITING_QUOTE`; customer pays
+  the balance online (PhonePe, same initiate→redirect→webhook→verify chain); on
+  settle the quote is PAID and booking returns to `IN_PROGRESS`. One open quote
+  per booking (v1). Backend: `src/quotes/`, employee routes on `employee/jobs`,
+  supervisor/admin routes on `admin/bookings` (doubled path
+  `/admin/bookings/bookings/:id/quotes`), settlement in `payments.service.ts`
+  (`initiateQuotePayment`/`markQuotePaid`/`settleByMerchantId`), `parentOrderId`
+  link to origin order. Migrations: `add_booking_quotes`, `quote_parent_order`.
+  Frontend: technician job-detail quote section
+  (`src/app/employee/jobs/[id]/page.tsx`), customer quote card + pay
+  (`src/app/account/bookings/page.tsx`), supervisor Raise-quote button
+  (`src/app/admin/bookings/page.tsx`), `staffApi.ts` + `api.ts` helpers,
+  `RaiseQuoteModal`.
+- Quote/booking search — ⏳ NOT STARTED. Neither backend `listJobs`
+  (`employee.service.ts`) nor `listBookings` (`assignments.service.ts`) accepts a
+  search term today (status/assignment filters only). Needed: a `q` param → Prisma
+  `OR` with `contains`/`mode:'insensitive'` across `customer.fullName`,
+  `customer.phone`, `area`, `addressLine1`, `bookingNumber`; `q`/`search` added to
+  `fetchAdminBookings` + `fetchEmployeeJobs` in `staffApi.ts`; a debounced search
+  box on the admin bookings page and employee jobs list. Recommend server-side for
+  admin (scales to real volume); client-side acceptable for the employee list
+  (few jobs). Also: supervisor edit/cancel-quote UI (backend supports it; needs the
+  admin bookings payload to include the booking's open quote before a Cancel button
+  can render).
+- `AWAITING_QUOTE` filter tab — 🟡 add to `STATUS_FILTERS`
+  (`src/app/admin/bookings/page.tsx`) and `FILTERS`
+  (`src/app/employee/page.tsx`); one line each.
 - Completion confirmation (supervisor-confirmed; customer-facing view later) — 🟡
 - Feedback (rating + comment) — ⏳
 
@@ -215,7 +243,8 @@ reconciliation.
 - Rotate test admin credentials — ⏳
 - Verify `MAIL_FROM` domain — ⏳
 - Run `prisma migrate deploy` on DB (pending migrations: `add_app_settings`,
-  `order_charges`, `booking_completion_spine`, `wallet_ledger_and_payout_rate`) — ⏳
+  `order_charges`, `booking_completion_spine`, `wallet_ledger_and_payout_rate`,
+  `add_booking_quotes`, `quote_parent_order`) — ⏳
 - Configure Cloudflare R2 (`R2_*` env vars) before go-live so photo upload
   works; flow is coded to fail gracefully until then — ⏳
 - Confirm `NEXT_PUBLIC_API_URL` on frontend host — ⏳

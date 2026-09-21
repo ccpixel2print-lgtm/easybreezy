@@ -12,8 +12,14 @@ const FILTERS = [
   'ACCEPTED',
   'IN_PROGRESS',
   'AWAITING_CONFIRMATION',
-  'COMPLETED',
+  'COMPLETED', 'AWAITING_QUOTE', 
 ] as const;
+
+function formatJobAddress(j: EmployeeJob): string {
+  return [j.addressLine1, j.addressLine2, j.area, j.city, j.pincode]
+    .filter((p) => p != null && String(p).trim() !== '')
+    .join(', ');
+}
 
 export default function EmployeeJobsPage() {
   const { token, logout } = useStaffAuth();
@@ -109,8 +115,23 @@ export default function EmployeeJobsPage() {
                     {job.scheduledTimeWindow ? ` · ${job.scheduledTimeWindow}` : ''}
                   </p>
                 )}
-                {job.customerName && <p>{job.customerName}</p>}
-                {job.pincode && <p>Pincode: {job.pincode}</p>}
+                {(job.customer?.fullName ?? job.customerName) && (
+                  <p className="font-medium text-ink">
+                    {job.customer?.fullName ?? job.customerName}
+                  </p>
+                )}
+                {(job.customer?.phone ?? job.customerPhone) && (
+                  <p>
+                    <a
+                      href={`tel:${job.customer?.phone ?? job.customerPhone}`}
+                      className="hover:text-brand"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {job.customer?.phone ?? job.customerPhone}
+                    </a>
+                  </p>
+                )}
+                {formatJobAddress(job) && <p className="text-ink/80">{formatJobAddress(job)}</p>}
               </div>
             </Link>
           ))}

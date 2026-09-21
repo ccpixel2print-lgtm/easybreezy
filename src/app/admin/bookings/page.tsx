@@ -9,12 +9,15 @@ import {
   reassignBooking,
   unassignBooking,
   confirmBookingCompletion,
+  raiseAdminQuote,
   StaffAuthError,
   type AdminBooking,
   type StaffMember,
+  type RaiseQuoteItemInput,
 } from '@/lib/staffApi';
 import StatusBadge from '@/components/staff/StatusBadge';
 import AssignModal from '@/components/staff/AssignModal';
+import RaiseQuoteModal from '@/components/staff/RaiseQuoteModal';
 
 /** Format an ISO/date string to DD-MM-YY. */
 function formatDateDDMMYY(value?: string | null): string {
@@ -44,6 +47,7 @@ const STATUS_FILTERS = [
   'ASSIGNED',
   'ACCEPTED',
   'IN_PROGRESS',
+  'AWAITING_QUOTE',
   'AWAITING_CONFIRMATION',
   'COMPLETED',
   '',
@@ -62,6 +66,7 @@ export default function AdminBookingsPage() {
   const [onlyUnassigned, setOnlyUnassigned] = useState(false);
 
   const [modal, setModal] = useState<{ booking: AdminBooking; mode: 'assign' | 'reassign' } | null>(null);
+  const [quoteBooking, setQuoteBooking] = useState<AdminBooking | null>(null);
 
   const isActiveEmployee = (s: StaffMember) =>
     s.role === 'EMPLOYEE' && (s.active ?? s.status !== 'INACTIVE');
@@ -188,6 +193,7 @@ export default function AdminBookingsPage() {
               b.status ?? '',
             );
             const canConfirm = b.status === 'AWAITING_CONFIRMATION';
+            const canQuote = b.status === 'IN_PROGRESS';
             const photos = (b.photos as { id: string; kind: string; url: string }[] | undefined) ?? [];
             return (
               <div key={b.id} className="rounded-2xl bg-white p-5 shadow-soft ring-1 ring-black/5">
@@ -303,6 +309,14 @@ export default function AdminBookingsPage() {
                       </button>
                     </>
                   )}
+                  {canQuote && (
+                    <button
+                      onClick={() => setQuoteBooking(b)}
+                      className="rounded-full border border-brand px-4 py-1.5 text-sm font-semibold text-brand hover:bg-brand-tint"
+                    >
+                      Raise quote
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -317,6 +331,21 @@ export default function AdminBookingsPage() {
           mode={modal.mode}
           onClose={() => setModal(null)}
           onConfirm={handleAssignConfirm}
+        />
+      )}
+
+      {quoteBooking && (
+        <RaiseQuoteModal
+          title={`Raise quote — #${quoteBooking.bookingNumber ?? quoteBooking.id}`}
+          gstRate={0}
+          onClose={() => setQuoteBooking(null)}
+          submit={(items: RaiseQuoteItemInput[]) =>
+            raiseAdminQuote(token!, quoteBooking.id, items)
+          }
+          onSuccess={() => {
+            setQuoteBooking(null);
+            load();
+          }}
         />
       )}
     </div>
